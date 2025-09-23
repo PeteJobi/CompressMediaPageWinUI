@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="CompressMediaPage.CompressMediaPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="using:CompressMediaPage"
+    xmlns:converters="using:CommunityToolkit.WinUI.Converters"
+    xmlns:drawing="using:System.Drawing"
+    mc:Ignorable="d">
+    <Page.Resources>
+        <x:Double x:Key="BigFontSize">30</x:Double>
+        <local:EnumToVisibilityConverter x:Key="FileSizeVisibility" Enum="FileSize"/>
+		<local:EnumToVisibilityConverter x:Key="VideoBitrateVisibility" Enum="VideoBitrate"/>
+		<local:EnumToVisibilityConverter x:Key="ResolutionVisibility" Enum="Resolution"/>
+		<local:EnumToVisibilityConverter x:Key="CRFVisibility" Enum="CRF"/>
+		<local:EnumToVisibilityConverter x:Key="AudioBitrateVisibility" Enum="AudioBitrate"/>
+		<local:EnumToVisibilityConverter x:Key="AudioSampleRateVisibility" Enum="AR"/>
+		<local:EnumToVisibilityConverter x:Key="AudioQualityVisibility" Enum="QA"/>
+		<local:EnumToVisibilityConverter x:Key="ImageQualityVisibility" Enum="QV"/>
+		<local:EnumToVisibilityConverter x:Key="FPSVisibility" Enum="FPS"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
+        <converters:DoubleToVisibilityConverter x:Key="DoubleToVisibilityConverter" GreaterThan="0" />
+        <converters:DoubleToObjectConverter x:Key="CustomResVisibility" LessThan="1" TrueValue="Collapsed" FalseValue="Visible" />
+        <converters:DoubleToObjectConverter x:Key="ResolutionToFontSizeConverter" GreaterThan="1"
+                                            TrueValue="{StaticResource BigFontSize}"
+                                            FalseValue="{StaticResource ControlContentThemeFontSize}" />
+        <converters:BoolToObjectConverter x:Key="SliderWidth" TrueValue="200" FalseValue="500"/>
+		<converters:BoolToObjectConverter x:Key="SizeOrBitrateText" TrueValue="bitrate" FalseValue="size"/>
+        <converters:BoolToObjectConverter x:Key="CloseOrCancelConverter" TrueValue="Close" FalseValue="Cancel"/>
+        <converters:BoolToObjectConverter x:Key="ResumeOrPauseConverter" TrueValue="Resume" FalseValue="Pause"/>
+        <converters:BoolToObjectConverter x:Key="CompressingOrDoneConverter" TrueValue="Compressing..." FalseValue="Done"/>
+        <converters:BoolToObjectConverter x:Key="ResumeOrPauseGlyphConverter" TrueValue="&#xE768;" FalseValue="&#xE784;"/>
+        <DataTemplate x:Key="SizeOrBitrate" x:DataType="local:SizeOrBitrateModel">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="5">
+                <TextBlock HorizontalAlignment="Center">
+                    <Run>Original </Run>
+                    <Run Text="{x:Bind IsBitrate, Mode=OneWay, Converter={StaticResource SizeOrBitrateText}}"></Run>
+                    <Run>: </Run>
+                    <Run Text="{x:Bind OriginalValue, Mode=OneWay}"></Run>
+                </TextBlock>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <NumberBox Width="200" Value="{x:Bind SpecifiedValue, Mode=TwoWay}" FontSize="{StaticResource BigFontSize}"/>
+                    <TextBlock Text="{x:Bind Unit}" VerticalAlignment="Center" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                </StackPanel>
+                <CheckBox Content="Don't exceed target" HorizontalAlignment="Center" IsChecked="{x:Bind LimitToTarget, Mode=TwoWay}"/>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="OriginalResText" x:DataType="x:String">
+            <TextBlock HorizontalAlignment="Center">
+                <Run>Original resolution: </Run>
+                <Run Text="{x:Bind Mode=OneWay}" />
+            </TextBlock>
+        </DataTemplate>
+        <DataTemplate x:Key="SliderOption" x:DataType="local:SliderModel">
+            <StackPanel>
+                <Slider Value="{x:Bind Value, Mode=TwoWay}" StepFrequency="1" SnapsTo="StepValues" TickFrequency="1" TickPlacement="BottomRight"
+                        Minimum="{x:Bind Min}" Maximum="{x:Bind Max}" Width="{x:Bind SmallWidth, Converter={StaticResource SliderWidth}}" />
+                <TextBlock Text="{x:Bind ValueString, Mode=OneWay}" FontSize="{StaticResource BigFontSize}"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+		</DataTemplate>
+        <DataTemplate x:Key="DropdownOption" x:DataType="local:DropdownModel">
+			<StackPanel Spacing="5">
+                <TextBlock HorizontalAlignment="Center">
+                    <Run>Original </Run>
+                    <Run Text="{x:Bind Label}"/>
+                    <Run>: </Run>
+                    <Run Text="{x:Bind OriginalValue, Mode=OneWay}" />
+                </TextBlock>
+                <ComboBox ItemsSource="{x:Bind Options}" HorizontalAlignment="Center"
+                          SelectedItem="{x:Bind SelectedValue, Mode=TwoWay}"
+                          FontSize="{StaticResource BigFontSize}" />
+            </StackPanel>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid Padding="10">
+		<Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid x:Name="Grid" RowSpacing="10" VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Viewbox Height="150">
+                <FontIcon Glyph="{x:Bind optionProps.IconGlyph}" />
+            </Viewbox>
+            <TextBlock Grid.Row="1" Text="{x:Bind optionProps.FileName}" Style="{StaticResource TitleTextBlockStyle}"
+                       HorizontalTextAlignment="Center" />
+            <Button Grid.Row="2" HorizontalAlignment="Center" Click="GoBack">
+                <StackPanel Orientation="Horizontal">
+                    <FontIcon Glyph="&#xE72B;" Margin="0,0,10,0" />
+                    <TextBlock VerticalAlignment="Center">Go back</TextBlock>
+                </StackPanel>
+            </Button>
+            <Grid Grid.Row="3" Height="250">
+                <!--File size-->
+                <ContentPresenter ContentTemplate="{StaticResource SizeOrBitrate}"
+                                  Content="{x:Bind optionProps.SizeViewModel}"
+                                  Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource FileSizeVisibility}}" />
+                <!--Video bitrate-->
+                <ContentPresenter ContentTemplate="{StaticResource SizeOrBitrate}"
+                                  Content="{x:Bind optionProps.VideoBitrateViewModel}"
+                                  Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource VideoBitrateVisibility}}" />
+                <!--Resolution-->
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="5"
+                            Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource ResolutionVisibility}}">
+                    <ContentPresenter ContentTemplate="{StaticResource OriginalResText}"
+                                      Content="{x:Bind optionProps.ResolutionModel.OriginalResolution, Mode=OneWay}"
+                                      Visibility="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource CustomResVisibility}}" />
+                    <ComboBox ItemsSource="{x:Bind optionProps.ResolutionModel.Options}" HorizontalAlignment="Center"
+                              SelectedItem="{x:Bind optionProps.ResolutionModel.SelectedResolution, Mode=TwoWay}"
+                              FontSize="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource ResolutionToFontSizeConverter}}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="drawing:Size">
+                                <Grid>
+                                    <TextBlock
+                                        Visibility="{x:Bind Width, Converter={StaticResource DoubleToVisibilityConverter}}">
+                                        <Run Text="{x:Bind Width}" />
+                                        <Run> x </Run>
+                                        <Run Text="{x:Bind Height}" />
+                                    </TextBlock>
+                                    <TextBlock
+                                        Visibility="{x:Bind Width, Converter={StaticResource DoubleToVisibilityConverter}, ConverterParameter=True}">
+                                        Custom
+                                    </TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <ContentPresenter ContentTemplate="{StaticResource OriginalResText}"
+                                      Content="{x:Bind optionProps.ResolutionModel.OriginalResolution, Mode=OneWay}"
+                                      Margin="0,20,0,0"
+                                      Visibility="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource CustomResVisibility}, ConverterParameter=True}" />
+                    <StackPanel Spacing="10" Orientation="Horizontal"
+                                Visibility="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource CustomResVisibility}, ConverterParameter=True}">
+                        <NumberBox Width="200" Value="{x:Bind optionProps.ResolutionModel.CustomWidth, Mode=TwoWay}"
+                                   FontSize="{StaticResource BigFontSize}" />
+                        <TextBlock VerticalAlignment="Center" Style="{StaticResource SubtitleTextBlockStyle}"> x </TextBlock>
+                        <NumberBox Width="200" Value="{x:Bind optionProps.ResolutionModel.CustomHeight, Mode=TwoWay}"
+                                   FontSize="{StaticResource BigFontSize}" />
+                    </StackPanel>
+                </StackPanel>
+                <!--CRF-->
+                <StackPanel
+                    Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource CRFVisibility}}"
+                    VerticalAlignment="Center">
+                    <TextBlock HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}">CRF</TextBlock>
+                    <ContentPresenter ContentTemplate="{StaticResource SliderOption}"
+                                      Content="{x:Bind optionProps.RateFactorModel.CRFSlider}" />
+                    <TextBlock HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}"
+                               Margin="0,20,0,0">
+                        Preset
+                    </TextBlock>
+                    <ContentPresenter ContentTemplate="{StaticResource SliderOption}"
+                                      Content="{x:Bind optionProps.RateFactorModel.PresetSlider}" />
+                </StackPanel>
+                <!--FPS-->
+                <ContentPresenter ContentTemplate="{StaticResource DropdownOption}" Content="{x:Bind optionProps.FpsModel}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource FPSVisibility}}"/>
+                <!--Audio bitrate-->
+                <ContentPresenter ContentTemplate="{StaticResource DropdownOption}" Content="{x:Bind optionProps.AudioBitrateModel}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource AudioBitrateVisibility}}"/>
+                <!--Audio sample rate (AR)-->
+                <ContentPresenter ContentTemplate="{StaticResource DropdownOption}" Content="{x:Bind optionProps.AudioSampleRateModel}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource AudioSampleRateVisibility}}"/>
+                <!--Audio Quality (QA)-->
+                <ContentPresenter ContentTemplate="{StaticResource SliderOption}"
+                                  Content="{x:Bind optionProps.AudioQuality}" VerticalAlignment="Center"
+                                  Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource AudioQualityVisibility}}" />
+                <!--Image Quality (QV)-->
+                <ContentPresenter ContentTemplate="{StaticResource SliderOption}"
+                                  Content="{x:Bind optionProps.ImageQuality}" VerticalAlignment="Center"
+                                  Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource ImageQualityVisibility}}" />
+            </Grid>
+            <RadioButtons Grid.Row="4" ItemsSource="{x:Bind optionProps.Options}"
+                          MaxColumns="{x:Bind optionProps.Columns}"
+                          SelectedItem="{x:Bind viewModel.SelectedOption, Mode=TwoWay}" HorizontalAlignment="Center" />
+        </Grid>
+		<RelativePanel Visibility="{x:Bind viewModel.BeforeOperation, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=True}"
+                       Grid.Row="1" Margin="0,0,0,10">
+			<TextBlock Text="{x:Bind viewModel.AfterOperation, Mode=OneWay, Converter={StaticResource CompressingOrDoneConverter}, ConverterParameter=True}"/>
+			<TextBlock Name="CompressProgressText" RelativePanel.AlignRightWithPanel="True"/>
+			<ProgressBar Name="CompressProgressValue" RelativePanel.Below="CompressProgressText" Maximum="{x:Bind progressMax}" RelativePanel.AlignLeftWithPanel="True"
+						 RelativePanel.AlignRightWithPanel="True" Margin="0,10"/>
+			<Button RelativePanel.Below="CompressProgressValue" Width="120" Click="PauseOrViewCompress_OnClick">
+				<Grid>
+					<StackPanel Orientation="Horizontal" Visibility="{x:Bind viewModel.AfterOperation, Mode=OneWay}">
+						<FontIcon Glyph="&#xE8A7;" Margin="0,0,10,0" />
+						<TextBlock VerticalAlignment="Center" Text="View"/>
+					</StackPanel>
+					<StackPanel Orientation="Horizontal" Visibility="{x:Bind viewModel.DuringOperation, Mode=OneWay}">
+						<FontIcon Glyph="{x:Bind viewModel.ProcessPaused, Mode=OneWay, Converter={StaticResource ResumeOrPauseGlyphConverter}}" Margin="0,0,10,0" />
+						<TextBlock VerticalAlignment="Center" Text="{x:Bind viewModel.ProcessPaused, Mode=OneWay, Converter={StaticResource ResumeOrPauseConverter}}"/>
+					</StackPanel>
+				</Grid>
+			</Button>
+			<Button RelativePanel.Below="CompressProgressValue" RelativePanel.AlignRightWithPanel="True" Width="120" Click="CancelOrCloseCompress_OnClick">
+				<FlyoutBase.AttachedFlyout>
+					<Flyout x:Name="CancelFlyout">
+						<StackPanel Orientation="Horizontal">
+							<TextBlock Style="{ThemeResource BaseTextBlockStyle}" VerticalAlignment="Center">Cancel process?</TextBlock>
+							<Button ToolTipService.ToolTip="Done" Margin="10,0,0,0" Click="CancelProcess">
+								<FontIcon Glyph="&#xE8FB;" />
+							</Button>
+						</StackPanel>
+					</Flyout>
+				</FlyoutBase.AttachedFlyout>
+				<StackPanel Orientation="Horizontal">
+					<FontIcon Glyph="&#xE711;" Margin="0,0,10,0" />
+					<TextBlock VerticalAlignment="Center" Text="{x:Bind viewModel.AfterOperation, Mode=OneWay, Converter={StaticResource CloseOrCancelConverter}}"/>
+				</StackPanel>
+			</Button>
+		</RelativePanel>
+        <Button HorizontalAlignment="Stretch" Grid.Row="2" Style="{StaticResource AccentButtonStyle}" Click="Compress"
+                IsEnabled="{x:Bind viewModel.DuringOperation, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}">
+            <Grid>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Viewbox MaxWidth="30">
+                        <FontIcon Glyph="&#xE92C;" />
+                    </Viewbox>
+                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" HorizontalTextAlignment="Center">Compress!</TextBlock>
+                </StackPanel>
+            </Grid>
+        </Button>
+        <ContentDialog Name="ErrorDialog" IsPrimaryButtonEnabled="True" PrimaryButtonText="Ok"/>
+    </Grid>
+</Page>
