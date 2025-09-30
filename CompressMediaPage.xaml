@@ -190,7 +190,7 @@
                           SelectedItem="{x:Bind viewModel.SelectedOption, Mode=TwoWay}" HorizontalAlignment="Center" />
         </Grid>
 		<RelativePanel Visibility="{x:Bind viewModel.BeforeOperation, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=True}"
-                       Grid.Row="1" Margin="0,0,0,10">
+                       Grid.Row="1" Margin="0,0,0,10" Width="700">
 			<TextBlock Text="{x:Bind viewModel.AfterOperation, Mode=OneWay, Converter={StaticResource CompressingOrDoneConverter}, ConverterParameter=True}"/>
 			<TextBlock Name="CompressProgressText" RelativePanel.AlignRightWithPanel="True"/>
 			<ProgressBar Name="CompressProgressValue" RelativePanel.Below="CompressProgressText" Maximum="{x:Bind progressMax}" RelativePanel.AlignLeftWithPanel="True"
@@ -224,7 +224,7 @@
 				</StackPanel>
 			</Button>
 		</RelativePanel>
-        <Button HorizontalAlignment="Stretch" Grid.Row="2" Style="{StaticResource AccentButtonStyle}" Click="Compress"
+        <Button HorizontalAlignment="Center" Grid.Row="2" Style="{StaticResource AccentButtonStyle}" Click="Compress" Width="400"
                 IsEnabled="{x:Bind viewModel.DuringOperation, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}">
             <Grid>
                 <StackPanel Orientation="Horizontal" Spacing="10">
