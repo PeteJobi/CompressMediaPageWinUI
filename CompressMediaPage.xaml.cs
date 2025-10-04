@@ -26,7 +26,7 @@ namespace CompressMediaPage
     {
         private string? navigateTo;
         //private string ffmpegPath;
-        private string outputFile;
+        private string? outputFile;
         private readonly double progressMax = 1_000_000;
         private readonly double[] resolutionOptions = { 144, 360, 480, 720, 1080, 1440, 2160 };
         private readonly double[] audioBitrateOptions = { 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320 };
@@ -313,6 +313,8 @@ namespace CompressMediaPage
             var failed = false;
             string? errorMessage = null;
 
+            string? tempOutputFile = null;
+            outputFile = null;
             try
             {
                 bool isAudio;
@@ -365,11 +367,11 @@ namespace CompressMediaPage
                     viewModel.State = OperationState.BeforeOperation;
                     await ErrorAction(errorMessage!);
                     await compressProcessor.Cancel(outputFile);
-                    outputFile = null;
                     return;
                 }
 
                 viewModel.State = OperationState.AfterOperation;
+                outputFile = tempOutputFile;
             }
             catch (Exception ex)
             {
@@ -385,7 +387,7 @@ namespace CompressMediaPage
 
             void SetOutputFile(string file)
             {
-                outputFile = file;
+                tempOutputFile = file;
             }
 
             async Task ErrorAction(string message)
