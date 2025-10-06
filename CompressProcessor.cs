@@ -107,7 +107,7 @@ namespace CompressMediaPage
             var duration = TimeSpan.MinValue;
             progress.Report(new ValueProgress(0, "0.0 %"));
             var outputFile = GetOutputName(mediaPath, setOutputFile);
-            var codec = isImage ? "" : "-c:v libx265 -c:a copy";
+            var codec = isImage ? "" : "-c:v libx265 -c:a copy -crf 18";
             await StartProcess($"-i \"{mediaPath}\" -vf \"scale={width}:-1\" {codec} \"{outputFile}\"", null, (o, args) =>
             {
                 if (string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
@@ -137,7 +137,7 @@ namespace CompressMediaPage
             var duration = TimeSpan.MinValue;
             progress.Report(new ValueProgress(0, "0.0 %"));
             var outputFile = GetOutputName(mediaPath, setOutputFile);
-            var codec = isGif ? "" : "-c:v libx265 -c:a copy";
+            var codec = isGif ? "" : "-c:v libx265 -c:a copy -crf 18";
             await StartProcess($"-i \"{mediaPath}\" -r {fps} {codec} \"{outputFile}\"", null, (o, args) =>
             {
                 if (string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
