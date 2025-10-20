@@ -20,8 +20,7 @@
 		<local:EnumToVisibilityConverter x:Key="AudioSampleRateVisibility" Enum="AR"/>
 		<local:EnumToVisibilityConverter x:Key="AudioQualityVisibility" Enum="QA"/>
 		<local:EnumToVisibilityConverter x:Key="ImageQualityVisibility" Enum="QV"/>
-		<local:EnumToVisibilityConverter x:Key="FPSVisibility" Enum="FPS"/>
-        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <local:EnumToVisibilityConverter x:Key="FPSVisibility" Enum="FPS"/>
         <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
         <converters:DoubleToVisibilityConverter x:Key="DoubleToVisibilityConverter" GreaterThan="0" />
         <converters:DoubleToObjectConverter x:Key="CustomResVisibility" LessThan="1" TrueValue="Collapsed" FalseValue="Visible" />
@@ -29,11 +28,8 @@
                                             TrueValue="{StaticResource BigFontSize}"
                                             FalseValue="{StaticResource ControlContentThemeFontSize}" />
         <converters:BoolToObjectConverter x:Key="SliderWidth" TrueValue="200" FalseValue="500"/>
-		<converters:BoolToObjectConverter x:Key="SizeOrBitrateText" TrueValue="bitrate" FalseValue="size"/>
-        <converters:BoolToObjectConverter x:Key="CloseOrCancelConverter" TrueValue="Close" FalseValue="Cancel"/>
-        <converters:BoolToObjectConverter x:Key="ResumeOrPauseConverter" TrueValue="Resume" FalseValue="Pause"/>
+        <converters:BoolToObjectConverter x:Key="SizeOrBitrateText" TrueValue="bitrate" FalseValue="size"/>
         <converters:BoolToObjectConverter x:Key="CompressingOrDoneConverter" TrueValue="Compressing..." FalseValue="Done"/>
-        <converters:BoolToObjectConverter x:Key="ResumeOrPauseGlyphConverter" TrueValue="&#xE768;" FalseValue="&#xE784;"/>
         <DataTemplate x:Key="SizeOrBitrate" x:DataType="local:SizeOrBitrateModel">
             <StackPanel HorizontalAlignment="Center" Spacing="5">
                 <TextBlock HorizontalAlignment="Center">
