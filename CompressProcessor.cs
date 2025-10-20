@@ -456,14 +456,14 @@ namespace CompressMediaPage
             }
         }
 
-        public async Task Cancel(string? outputFolder)
+        public async Task Cancel(string? outputFile)
         {
             if (currentProcess == null) return;
             currentProcess.Kill();
             await currentProcess.WaitForExitAsync();
             hasBeenKilled = true;
             currentProcess = null;
-            if (Directory.Exists(outputFolder)) Directory.Delete(outputFolder, true);
+            if (File.Exists(outputFile)) File.Delete(outputFile);
         }
 
         public void Pause()
