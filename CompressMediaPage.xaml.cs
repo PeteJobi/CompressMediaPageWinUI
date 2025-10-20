@@ -31,9 +31,7 @@ namespace CompressMediaPage
         private readonly double[] resolutionOptions = { 144, 360, 480, 720, 1080, 1440, 2160 };
         private readonly double[] audioBitrateOptions = { 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320 };
         private readonly double[] audioSampleRateOptions = { 8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000 };
-        private readonly double[] fpsOptions = { 5, 10, 15, 24, 30, 50, 60, 72, 90, 100, 120, 144, 200, 240 };
-        private const string audioBitrateUnit = "kb/s";
-        private const string audioSampleRateUnit = "kHz";
+        private readonly double[] fpsOptions = { 1, 5, 10, 15, 24, 30, 50, 60, 72, 90, 100, 120, 144, 200, 240 };
         private MainModel viewModel = new();
         private CompressProcessor compressProcessor;
         private OptionsProps optionProps;
@@ -58,7 +56,7 @@ namespace CompressMediaPage
             {
                 mediaType = CompressProcessor.GetMediaType(path);
             }
-            catch (NotSupportedException ex)
+            catch (NotSupportedException)
             {
                 ErrorDialog.Title = "Unsupported media type";
                 ErrorDialog.Content = "The file you selected is currently not supported by this application.";
@@ -169,8 +167,8 @@ namespace CompressMediaPage
                         }
                     }
                 };
-                optionProps.AudioBitrateModel = GetDropdownModel(audioBitrateOptions, "bitrate", audioBitrateUnit);
-                optionProps.AudioSampleRateModel = GetDropdownModel(audioSampleRateOptions, "sample rate", audioSampleRateUnit);
+                optionProps.AudioBitrateModel = GetDropdownModel(audioBitrateOptions, "bitrate", "kb/s");
+                optionProps.AudioSampleRateModel = GetDropdownModel(audioSampleRateOptions, "sample rate", "kHz");
                 optionProps.FpsModel = GetDropdownModel(fpsOptions, "fps", "FPS");
                 optionProps.AudioQuality = new SliderModel { Value = 2, Min = 0, Max = 9 };
                 optionProps.ImageQuality = new SliderModel { Value = 5, Min = 2, Max = 20 };
