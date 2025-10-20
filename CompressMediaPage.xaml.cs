@@ -12,6 +12,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using WinUIShared.Enums;
 using static System.Net.WebRequestMethods;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -305,8 +306,8 @@ namespace CompressMediaPage
             viewModel.State = OperationState.DuringOperation;
             var valueProgress = new Progress<ValueProgress>(progress =>
             {
-                CompressProgressValue.Value = progress.ActionProgress;
-                CompressProgressText.Text = progress.ActionProgressText;
+                ProcessProgress.ProgressPrimary = progress.ActionProgress;
+                ProcessProgress.RightTextPrimary = progress.ActionProgressText;
             });
             var failed = false;
             string? errorMessage = null;
@@ -394,44 +395,19 @@ namespace CompressMediaPage
             }
         }
 
-        private void PauseOrViewCompress_OnClick(object sender, RoutedEventArgs e)
-        {
-            if (viewModel.State == OperationState.AfterOperation)
-            {
-                compressProcessor.ViewFiles(outputFile);
-                return;
-            }
+        private void ProcessProgress_OnPauseRequested(object? sender, EventArgs e) => compressProcessor.Pause();
 
-            if (viewModel.ProcessPaused)
-            {
-                compressProcessor.Resume();
-                viewModel.ProcessPaused = false;
-            }
-            else
-            {
-                compressProcessor.Pause();
-                viewModel.ProcessPaused = true;
-            }
-        }
+        private void ProcessProgress_OnResumeRequested(object? sender, EventArgs e) => compressProcessor.Resume();
 
-        private void CancelOrCloseCompress_OnClick(object sender, RoutedEventArgs e)
-        {
-            if (viewModel.State == OperationState.AfterOperation)
-            {
-                viewModel.State = OperationState.BeforeOperation;
-                return;
-            }
+        private void ProcessProgress_OnViewRequested(object? sender, EventArgs e) => compressProcessor.ViewFile(outputFile);
 
-            FlyoutBase.ShowAttachedFlyout((FrameworkElement)sender);
-        }
-
-        private async void CancelProcess(object sender, RoutedEventArgs e)
+        private async void ProcessProgress_OnCancelRequested(object? sender, EventArgs e)
         {
             await compressProcessor.Cancel(outputFile);
             viewModel.State = OperationState.BeforeOperation;
-            viewModel.ProcessPaused = false;
-            CancelFlyout.Hide();
         }
+
+        private void ProcessProgress_OnCloseRequested(object? sender, EventArgs e) => viewModel.State = OperationState.BeforeOperation;
 
         private void GoBack()
         {
