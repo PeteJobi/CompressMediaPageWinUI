@@ -27,8 +27,7 @@ namespace CompressMediaPage
     {
         private string? navigateTo;
         //private string ffmpegPath;
-        private string outputFile;
-        private readonly double progressMax = 1_000_000;
+        private string? outputFile;
         private readonly double[] resolutionOptions = { 144, 360, 480, 720, 1080, 1440, 2160 };
         private readonly double[] audioBitrateOptions = { 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320 };
         private readonly double[] audioSampleRateOptions = { 8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000 };
@@ -321,39 +320,39 @@ namespace CompressMediaPage
                         var width = optionProps.ResolutionModel.SelectedResolution.Width;
                         if(width == 0) width = optionProps.ResolutionModel.CustomWidth;
                         var isImage = optionProps.MediaType != MediaType.Video;
-                        await compressProcessor.CompressResolution(width, isImage, progressMax, valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
+                        await compressProcessor.CompressResolution(width, isImage, valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
                         break;
                     case CompressionMethod.VideoBitrate or CompressionMethod.AudioBitrate:
                         isAudio = optionProps.MediaType == MediaType.Audio;
                         var bitrate = isAudio ? optionProps.AudioBitrateModel.SelectedValue.Value : optionProps.VideoBitrateViewModel.SpecifiedValue;
                         await compressProcessor.CompressBitrate(bitrate, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio,
-                            progressMax, valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
+                            valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
                         break;
                     case CompressionMethod.FileSize:
                         isAudio = optionProps.MediaType == MediaType.Audio;
                         var size = optionProps.SizeViewModel.SpecifiedValue;
-                        await compressProcessor.CompressSize(size, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio, progressMax, valueProgress,
+                        await compressProcessor.CompressSize(size, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio, valueProgress,
                             SetOutputFile, ErrorActionFromFfmpeg);
                         break;
                     case CompressionMethod.FPS:
                         var isGif = optionProps.MediaType == MediaType.ImageGif;
-                        await compressProcessor.CompressFPS(optionProps.FpsModel.SelectedValue.Value, isGif, progressMax, valueProgress,
+                        await compressProcessor.CompressFPS(optionProps.FpsModel.SelectedValue.Value, isGif, valueProgress,
                             SetOutputFile, ErrorActionFromFfmpeg);
                         break;
                     case CompressionMethod.CRF:
                         await compressProcessor.CompressCRF(optionProps.RateFactorModel.CRFSlider.Value, optionProps.RateFactorModel.PresetSlider.ValueString,
-                            progressMax, valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
+                            valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
                         break;
                     case CompressionMethod.QA:
-                        await compressProcessor.CompressAudioQualityFactor(optionProps.AudioQuality.Value, progressMax,
+                        await compressProcessor.CompressAudioQualityFactor(optionProps.AudioQuality.Value,
                             valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
                         break;
                     case CompressionMethod.AR:
-                        await compressProcessor.CompressAudioSamplingRate(optionProps.AudioSampleRateModel.SelectedValue.Value, progressMax,
+                        await compressProcessor.CompressAudioSamplingRate(optionProps.AudioSampleRateModel.SelectedValue.Value,
                             valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
                         break;
                     case CompressionMethod.QV:
-                        await compressProcessor.CompressImageQualityFactor(optionProps.ImageQuality.Value, progressMax,
+                        await compressProcessor.CompressImageQualityFactor(optionProps.ImageQuality.Value,
                             valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
                         break;
                 }

@@ -18,6 +18,8 @@ namespace CompressMediaPage
         private string mediaPath;
         private Process? currentProcess;
         private bool hasBeenKilled;
+        private const double Max = 100;
+
         private const string FileNameLongError =
             "The source file name is too long. Shorten it to get the total number of characters in the destination directory lower than 256.\n\nDestination directory: ";
 
@@ -102,7 +104,7 @@ namespace CompressMediaPage
             return new Size(width, height);
         }
 
-        public async Task CompressResolution(int width, bool isImage, double progressMax, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
+        public async Task CompressResolution(int width, bool isImage, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
         {
             var duration = TimeSpan.MinValue;
             progress.Report(new ValueProgress(0, "0.0 %"));
@@ -125,14 +127,14 @@ namespace CompressMediaPage
                     if (CheckNoSpaceDuringOperation(args.Data, error)) return;
                     var matchCollection = Regex.Matches(args.Data, @"^frame=\s*\d+\s.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                     if (matchCollection.Count == 0) return;
-                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progressMax, progress);
+                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progress);
                 }
             });
             if (HasBeenKilled()) return;
-            AllDone(progressMax, progress);
+            AllDone(progress);
         }
 
-        public async Task CompressFPS(double fps, bool isGif, double progressMax, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
+        public async Task CompressFPS(double fps, bool isGif, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
         {
             var duration = TimeSpan.MinValue;
             progress.Report(new ValueProgress(0, "0.0 %"));
@@ -155,14 +157,14 @@ namespace CompressMediaPage
                     if (CheckNoSpaceDuringOperation(args.Data, error)) return;
                     var matchCollection = Regex.Matches(args.Data, @"^frame=\s*\d+\s.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                     if (matchCollection.Count == 0) return;
-                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progressMax, progress);
+                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progress);
                 }
             });
             if (HasBeenKilled()) return;
-            AllDone(progressMax, progress);
+            AllDone(progress);
         }
 
-        public async Task CompressSize(double sizeInMb, bool limitToTarget, bool isAudio, double progressMax, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
+        public async Task CompressSize(double sizeInMb, bool limitToTarget, bool isAudio, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
         {
             var duration = TimeSpan.MinValue;
             var parsedAudioBitrate = 0;
@@ -190,10 +192,10 @@ namespace CompressMediaPage
                 var audioBitrate = parsedAudioBitrate;
                 totalBitrate -= audioBitrate;
             }
-            await CompressBitrate(totalBitrate, limitToTarget, isAudio, progressMax, progress, setOutputFile, error);
+            await CompressBitrate(totalBitrate, limitToTarget, isAudio, progress, setOutputFile, error);
         }
 
-        public async Task CompressBitrate(double bitrate, bool limitToTarget, bool isAudio, double progressMax, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
+        public async Task CompressBitrate(double bitrate, bool limitToTarget, bool isAudio, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
         {
             var duration = TimeSpan.MinValue;
             progress.Report(new ValueProgress(0, "0.0 %"));
@@ -224,13 +226,13 @@ namespace CompressMediaPage
                 if (CheckNoSpaceDuringOperation(args.Data, error)) return;
                 MatchCollection matchCollection = Regex.Matches(args.Data, progressRegexStart + @"time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                 if (matchCollection.Count == 0) return;
-                IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progressMax, progress);
+                IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progress);
             });
             if (HasBeenKilled()) return;
-            AllDone(progressMax, progress);
+            AllDone(progress);
         }
 
-        public async Task CompressCRF(int crf, string preset, double progressMax, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
+        public async Task CompressCRF(int crf, string preset, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
         {
             var duration = TimeSpan.MinValue;
             progress.Report(new ValueProgress(0, "0.0 %"));
@@ -252,14 +254,14 @@ namespace CompressMediaPage
                     if (CheckNoSpaceDuringOperation(args.Data, error)) return;
                     var matchCollection = Regex.Matches(args.Data, @"^frame=\s*\d+\s.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                     if (matchCollection.Count == 0) return;
-                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progressMax, progress);
+                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progress);
                 }
             });
             if (HasBeenKilled()) return;
-            AllDone(progressMax, progress);
+            AllDone(progress);
         }
 
-        public async Task CompressAudioQualityFactor(int qa, double progressMax, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
+        public async Task CompressAudioQualityFactor(int qa, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
         {
             var duration = TimeSpan.MinValue;
             progress.Report(new ValueProgress(0, "0.0 %"));
@@ -280,14 +282,14 @@ namespace CompressMediaPage
                     if (CheckNoSpaceDuringOperation(args.Data, error)) return;
                     var matchCollection = Regex.Matches(args.Data, @"^size=\s*\d+kB.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                     if (matchCollection.Count == 0) return;
-                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progressMax, progress);
+                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progress);
                 }
             });
             if (HasBeenKilled()) return;
-            AllDone(progressMax, progress);
+            AllDone(progress);
         }
 
-        public async Task CompressAudioSamplingRate(double ar, double progressMax, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
+        public async Task CompressAudioSamplingRate(double ar, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
         {
             var parsedAudioBitrate = 0;
             var duration = TimeSpan.MinValue;
@@ -320,13 +322,13 @@ namespace CompressMediaPage
                 if (CheckNoSpaceDuringOperation(args.Data, error)) return;
                 var matchCollection = Regex.Matches(args.Data, @"^size=\s*\d+kB.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                 if (matchCollection.Count == 0) return;
-                IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progressMax, progress);
+                IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progress);
             });
             if (HasBeenKilled()) return;
-            AllDone(progressMax, progress);
+            AllDone(progress);
         }
 
-        public async Task CompressImageQualityFactor(int qv, double progressMax, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
+        public async Task CompressImageQualityFactor(int qv, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
         {
             var duration = TimeSpan.MinValue;
             progress.Report(new ValueProgress(0, "0.0 %"));
@@ -347,11 +349,11 @@ namespace CompressMediaPage
                     if (CheckNoSpaceDuringOperation(args.Data, error)) return;
                     var matchCollection = Regex.Matches(args.Data, @"^size=\s*\d+kB.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                     if (matchCollection.Count == 0) return;
-                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progressMax, progress);
+                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value), duration, progress);
                 }
             });
             if (HasBeenKilled()) return;
-            AllDone(progressMax, progress);
+            AllDone(progress);
             
         }
 
@@ -406,23 +408,23 @@ namespace CompressMediaPage
             return true;
         }
 
-        private void IncrementProgress(TimeSpan currentTime, TimeSpan totalDuration, double max, IProgress<ValueProgress> progress)
+        private void IncrementProgress(TimeSpan currentTime, TimeSpan totalDuration, IProgress<ValueProgress> progress)
         {
             var fraction = currentTime / totalDuration;
-            progress.Report(new ValueProgress(fraction * max, $"{Math.Round(fraction * 100, 2)} %"));
+            progress.Report(new ValueProgress(fraction * Max, $"{Math.Round(fraction * 100, 2)} %"));
         }
 
-        void AllDone(double max, IProgress<ValueProgress> valueProgress)
+        void AllDone(IProgress<ValueProgress> valueProgress)
         {
             currentProcess = null;
             valueProgress.Report(new ValueProgress
             {
-                ActionProgress = max,
+                ActionProgress = Max,
                 ActionProgressText = "100 %"
             });
         }
 
-        public void ViewFiles(string file)
+        public void ViewFile(string file)
         {
             var info = new ProcessStartInfo();
             info.FileName = "explorer";
@@ -454,7 +456,7 @@ namespace CompressMediaPage
             }
         }
 
-        public async Task Cancel(string outputFolder)
+        public async Task Cancel(string? outputFolder)
         {
             if (currentProcess == null) return;
             currentProcess.Kill();
