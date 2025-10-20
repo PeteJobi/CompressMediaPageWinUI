@@ -34,7 +34,7 @@
         <converters:BoolToObjectConverter x:Key="CompressingOrDoneConverter" TrueValue="Compressing..." FalseValue="Done"/>
         <converters:BoolToObjectConverter x:Key="ResumeOrPauseGlyphConverter" TrueValue="&#xE768;" FalseValue="&#xE784;"/>
         <DataTemplate x:Key="SizeOrBitrate" x:DataType="local:SizeOrBitrateModel">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="5">
+            <StackPanel HorizontalAlignment="Center" Spacing="5">
                 <TextBlock HorizontalAlignment="Center">
                     <Run>Original </Run>
                     <Run Text="{x:Bind IsBitrate, Mode=OneWay, Converter={StaticResource SizeOrBitrateText}}"></Run>
@@ -77,32 +77,28 @@
         </DataTemplate>
     </Page.Resources>
 
-    <Grid Padding="10">
+    <Grid Padding="10" RowSpacing="10">
 		<Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid x:Name="Grid" RowSpacing="10" VerticalAlignment="Center">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-            <Viewbox Height="150">
-                <FontIcon Glyph="{x:Bind optionProps.IconGlyph}" />
-            </Viewbox>
-            <TextBlock Grid.Row="1" Text="{x:Bind optionProps.FileName}" Style="{StaticResource TitleTextBlockStyle}"
-                       HorizontalTextAlignment="Center" />
-            <Button Grid.Row="2" HorizontalAlignment="Center" Click="GoBack">
-                <StackPanel Orientation="Horizontal">
-                    <FontIcon Glyph="&#xE72B;" Margin="0,0,10,0" />
-                    <TextBlock VerticalAlignment="Center">Go back</TextBlock>
-                </StackPanel>
-            </Button>
-            <Grid Grid.Row="3" Height="250">
+        <Viewbox Height="150">
+            <FontIcon Glyph="{x:Bind optionProps.IconGlyph}" />
+        </Viewbox>
+        <TextBlock Grid.Row="1" Text="{x:Bind optionProps.FileName}" Style="{StaticResource TitleTextBlockStyle}"
+                   HorizontalTextAlignment="Center" />
+        <Button Grid.Row="2" HorizontalAlignment="Center" Click="GoBack">
+            <StackPanel Orientation="Horizontal">
+                <FontIcon Glyph="&#xE72B;" Margin="0,0,10,0" />
+                <TextBlock VerticalAlignment="Center">Go back</TextBlock>
+            </StackPanel>
+        </Button>
+        <StackPanel Grid.Row="3" x:Name="Grid" Spacing="10" VerticalAlignment="Center">
+            <Grid Height="250">
                 <!--File size-->
                 <ContentPresenter ContentTemplate="{StaticResource SizeOrBitrate}"
                                   Content="{x:Bind optionProps.SizeViewModel}"
@@ -112,7 +108,7 @@
                                   Content="{x:Bind optionProps.VideoBitrateViewModel}"
                                   Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource VideoBitrateVisibility}}" />
                 <!--Resolution-->
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="5"
+                <StackPanel HorizontalAlignment="Center" Spacing="5"
                             Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource ResolutionVisibility}}">
                     <ContentPresenter ContentTemplate="{StaticResource OriginalResText}"
                                       Content="{x:Bind optionProps.ResolutionModel.OriginalResolution, Mode=OneWay}"
@@ -151,9 +147,7 @@
                     </StackPanel>
                 </StackPanel>
                 <!--CRF-->
-                <StackPanel
-                    Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource CRFVisibility}}"
-                    VerticalAlignment="Center">
+                <StackPanel Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource CRFVisibility}}">
                     <TextBlock HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}">CRF</TextBlock>
                     <ContentPresenter ContentTemplate="{StaticResource SliderOption}"
                                       Content="{x:Bind optionProps.RateFactorModel.CRFSlider}" />
@@ -166,31 +160,30 @@
                 </StackPanel>
                 <!--FPS-->
                 <ContentPresenter ContentTemplate="{StaticResource DropdownOption}" Content="{x:Bind optionProps.FpsModel}"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"
                                   Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource FPSVisibility}}"/>
                 <!--Audio bitrate-->
                 <ContentPresenter ContentTemplate="{StaticResource DropdownOption}" Content="{x:Bind optionProps.AudioBitrateModel}"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"
                                   Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource AudioBitrateVisibility}}"/>
                 <!--Audio sample rate (AR)-->
                 <ContentPresenter ContentTemplate="{StaticResource DropdownOption}" Content="{x:Bind optionProps.AudioSampleRateModel}"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"
                                   Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource AudioSampleRateVisibility}}"/>
                 <!--Audio Quality (QA)-->
                 <ContentPresenter ContentTemplate="{StaticResource SliderOption}"
-                                  Content="{x:Bind optionProps.AudioQuality}" VerticalAlignment="Center"
+                                  Content="{x:Bind optionProps.AudioQuality}"
                                   Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource AudioQualityVisibility}}" />
                 <!--Image Quality (QV)-->
                 <ContentPresenter ContentTemplate="{StaticResource SliderOption}"
-                                  Content="{x:Bind optionProps.ImageQuality}" VerticalAlignment="Center"
+                                  Content="{x:Bind optionProps.ImageQuality}"
                                   Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource ImageQualityVisibility}}" />
             </Grid>
-            <RadioButtons Grid.Row="4" ItemsSource="{x:Bind optionProps.Options}"
-                          MaxColumns="{x:Bind optionProps.Columns}"
+            <RadioButtons ItemsSource="{x:Bind optionProps.Options}" MaxColumns="{x:Bind optionProps.Columns}"
                           SelectedItem="{x:Bind viewModel.SelectedOption, Mode=TwoWay}" HorizontalAlignment="Center" />
-        </Grid>
+        </StackPanel>
 		<RelativePanel Visibility="{x:Bind viewModel.BeforeOperation, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=True}"
-                       Grid.Row="1" Margin="0,0,0,10" Width="700">
+                       Grid.Row="4" Margin="0,0,0,10" Width="700">
 			<TextBlock Text="{x:Bind viewModel.AfterOperation, Mode=OneWay, Converter={StaticResource CompressingOrDoneConverter}, ConverterParameter=True}"/>
 			<TextBlock Name="CompressProgressText" RelativePanel.AlignRightWithPanel="True"/>
 			<ProgressBar Name="CompressProgressValue" RelativePanel.Below="CompressProgressText" Maximum="{x:Bind progressMax}" RelativePanel.AlignLeftWithPanel="True"
@@ -224,7 +217,7 @@
 				</StackPanel>
 			</Button>
 		</RelativePanel>
-        <Button HorizontalAlignment="Center" Grid.Row="2" Style="{StaticResource AccentButtonStyle}" Click="Compress" Width="400"
+        <Button HorizontalAlignment="Center" Grid.Row="5" Style="{StaticResource AccentButtonStyle}" Click="Compress" Width="400"
                 IsEnabled="{x:Bind viewModel.DuringOperation, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}">
             <Grid>
                 <StackPanel Orientation="Horizontal" Spacing="10">
