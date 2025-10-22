@@ -311,6 +311,8 @@ namespace CompressMediaPage
             var failed = false;
             string? errorMessage = null;
 
+            string? tempOutputFile = null;
+            outputFile = null;
             try
             {
                 bool isAudio;
@@ -363,11 +365,11 @@ namespace CompressMediaPage
                     viewModel.State = OperationState.BeforeOperation;
                     await ErrorAction(errorMessage!);
                     await compressProcessor.Cancel(outputFile);
-                    outputFile = null;
                     return;
                 }
 
                 viewModel.State = OperationState.AfterOperation;
+                outputFile = tempOutputFile;
             }
             catch (Exception ex)
             {
@@ -383,7 +385,7 @@ namespace CompressMediaPage
 
             void SetOutputFile(string file)
             {
-                outputFile = file;
+                tempOutputFile = file;
             }
 
             async Task ErrorAction(string message)
