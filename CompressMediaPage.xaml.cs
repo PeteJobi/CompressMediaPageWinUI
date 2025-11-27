@@ -28,10 +28,12 @@ namespace CompressMediaPage
         private string? navigateTo;
         //private string ffmpegPath;
         private string? outputFile;
-        private readonly double[] resolutionOptions = { 144, 360, 480, 720, 1080, 1440, 2160 };
-        private readonly double[] audioBitrateOptions = { 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320 };
-        private readonly double[] audioSampleRateOptions = { 8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000 };
-        private readonly double[] fpsOptions = { 1, 5, 10, 15, 24, 30, 50, 60, 72, 90, 100, 120, 144, 200, 240 };
+        private readonly double[] resolutionOptions = [144, 360, 480, 720, 1080, 1440, 2160];
+        private readonly double[] audioBitrateOptions = [32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
+        private readonly double[] audioSampleRateOptions = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000];
+        private readonly double[] fpsOptions = [1, 5, 10, 15, 24, 30, 50, 60, 72, 90, 100, 120, 144, 200, 240];
+        private const string BitrateUnit = "kb/s";
+        private const string SizeUnit = "MB";
         private MainModel viewModel = new();
         private CompressProcessor compressProcessor;
         private OptionsProps optionProps;
@@ -138,13 +140,13 @@ namespace CompressMediaPage
             {
                 optionProps.SizeViewModel = new SizeOrBitrateModel
                 {
-                    Unit = "MB",
+                    Unit = SizeUnit,
                     OriginalValue = "Calculating..."
                 };
                 optionProps.VideoBitrateViewModel = new SizeOrBitrateModel
                 {
                     IsBitrate = true,
-                    Unit = "kb/s",
+                    Unit = BitrateUnit,
                     OriginalValue = "Calculating..."
                 };
                 optionProps.ResolutionModel = new ResolutionModel
@@ -167,7 +169,7 @@ namespace CompressMediaPage
                         }
                     }
                 };
-                optionProps.AudioBitrateModel = GetDropdownModel(audioBitrateOptions, "bitrate", "kb/s");
+                optionProps.AudioBitrateModel = GetDropdownModel(audioBitrateOptions, "bitrate", BitrateUnit);
                 optionProps.AudioSampleRateModel = GetDropdownModel(audioSampleRateOptions, "sample rate", "kHz");
                 optionProps.FpsModel = GetDropdownModel(fpsOptions, "fps", "FPS");
                 optionProps.AudioQuality = new SliderModel { Value = 2, Min = 0, Max = 9 };
@@ -313,6 +315,7 @@ namespace CompressMediaPage
 
             string? tempOutputFile = null;
             outputFile = null;
+            viewModel.NewSize = null;
             try
             {
                 bool isAudio;
@@ -370,6 +373,7 @@ namespace CompressMediaPage
 
                 viewModel.State = OperationState.AfterOperation;
                 outputFile = tempOutputFile;
+                viewModel.NewSize = $"{Math.Round(compressProcessor.GetFileSize(outputFile!), 2)} {SizeUnit}";
             }
             catch (Exception ex)
             {

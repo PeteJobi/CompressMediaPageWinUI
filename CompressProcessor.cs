@@ -31,7 +31,7 @@ namespace CompressMediaPage
 
         public async Task<VideoDetails> GetVideoDetails(Action<string> error)
         {
-            var size = new FileInfo(mediaPath).Length / (1024.0 * 1024.0); // Size in MB
+            var size = GetFileSize(mediaPath);
             double bitrate = 0, fps = 0;
             int width = 0, height = 0;
             var valuesSet = false;
@@ -61,7 +61,7 @@ namespace CompressMediaPage
 
         public async Task<AudioDetails> GetAudioDetails(Action<string> error)
         {
-            var size = new FileInfo(mediaPath).Length / (1024.0 * 1024.0); // Size in MB
+            var size = GetFileSize(mediaPath);
             int bitrate = 0, sampleRate = 0;
             var valuesSet = false;
 
@@ -103,6 +103,8 @@ namespace CompressMediaPage
 
             return new Size(width, height);
         }
+
+        public double GetFileSize(string outputFile) => new FileInfo(outputFile).Length / (1024.0 * 1024.0); // Size in MB
 
         public async Task CompressResolution(int width, bool isImage, IProgress<ValueProgress> progress, Action<string> setOutputFile, Action<string> error)
         {

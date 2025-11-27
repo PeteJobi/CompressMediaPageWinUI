@@ -18,11 +18,19 @@ namespace CompressMediaPage
             get => _selectedoption;
             set => SetProperty(ref _selectedoption, value);
         }
+
         private OperationState _state;
         public OperationState State
         {
             get => _state;
             set => SetProperty(ref _state, value, alsoNotify: [nameof(BeforeOperation), nameof(DuringOperation), nameof(AfterOperation)]);
+        }
+
+        private string? _newsize;
+        public string? NewSize
+        {
+            get => _newsize;
+            set => SetProperty(ref _newsize, value);
         }
 
         public bool BeforeOperation => State == OperationState.BeforeOperation;

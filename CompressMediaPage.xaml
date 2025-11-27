@@ -30,6 +30,7 @@
         <converters:BoolToObjectConverter x:Key="SliderWidth" TrueValue="200" FalseValue="500"/>
         <converters:BoolToObjectConverter x:Key="SizeOrBitrateText" TrueValue="bitrate" FalseValue="size"/>
         <converters:BoolToObjectConverter x:Key="CompressingOrDoneConverter" TrueValue="Compressing..." FalseValue="Done"/>
+        <converters:EmptyObjectToObjectConverter x:Key="ObjectToVisibilityConverter" EmptyValue="Collapsed" NotEmptyValue="Visible"/>
         <DataTemplate x:Key="SizeOrBitrate" x:DataType="local:SizeOrBitrateModel">
             <StackPanel HorizontalAlignment="Center" Spacing="5">
                 <TextBlock HorizontalAlignment="Center">
@@ -80,6 +81,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -184,7 +186,12 @@
                                   PauseRequested="ProcessProgress_OnPauseRequested" ResumeRequested="ProcessProgress_OnResumeRequested"
                                   ViewRequested="ProcessProgress_OnViewRequested" CancelRequested="ProcessProgress_OnCancelRequested"
                                   CloseRequested="ProcessProgress_OnCloseRequested" OnlyPrimary="True"/>
-        <Button HorizontalAlignment="Center" Grid.Row="5" Style="{StaticResource AccentButtonStyle}" Click="Compress" Width="400"
+        <TextBlock Grid.Row="5" HorizontalAlignment="Center" Style="{StaticResource SubtitleTextBlockStyle}"
+                   Visibility="{x:Bind viewModel.NewSize, Mode=OneWay, Converter={StaticResource ObjectToVisibilityConverter}}">
+            <Run>New size: </Run>
+            <Run Text="{x:Bind viewModel.NewSize, Mode=OneWay}"/>
+        </TextBlock>
+        <Button HorizontalAlignment="Center" Grid.Row="6" Style="{StaticResource AccentButtonStyle}" Click="Compress" Width="400"
                 IsEnabled="{x:Bind viewModel.DuringOperation, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}">
             <Grid>
                 <StackPanel Orientation="Horizontal" Spacing="10">
