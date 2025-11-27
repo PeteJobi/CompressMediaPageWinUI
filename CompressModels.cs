@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Text;
+using WinUIShared.Enums;
 
 namespace CompressMediaPage
 {
@@ -22,12 +23,6 @@ namespace CompressMediaPage
         {
             get => _state;
             set => SetProperty(ref _state, value, alsoNotify: [nameof(BeforeOperation), nameof(DuringOperation), nameof(AfterOperation)]);
-        }
-        private bool _processpaused;
-        public bool ProcessPaused
-        {
-            get => _processpaused;
-            set => SetProperty(ref _processpaused, value);
         }
 
         public bool BeforeOperation => State == OperationState.BeforeOperation;
@@ -241,10 +236,5 @@ namespace CompressMediaPage
         QV, // Quality Value for images
         QA, // Audio Quality for audio files
         AR, // Audio Rate for audio files
-    }
-
-    public enum OperationState
-    {
-        BeforeOperation, DuringOperation, AfterOperation
     }
 }
