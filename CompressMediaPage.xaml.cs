@@ -356,20 +356,4 @@ namespace CompressMediaPage
         public string MediaPath { get; set; }
         public string? TypeToNavigateTo { get; set; }
     }
-
-    public class EnumToVisibilityConverter : IValueConverter
-    {
-        public CompressionMethod Enum { get; set; }
-
-        public object Convert(object value, Type targetType, object parameter, string language)
-        {
-            if (value is not CompressionMethod enumValue) return Visibility.Collapsed;
-            return enumValue.Equals(Enum) ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, string language)
-        {
-            throw new NotImplementedException();
-        }
-    }
 }
