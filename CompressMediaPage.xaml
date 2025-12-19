@@ -148,7 +148,7 @@
                 </StackPanel>
                 <!--CRF-->
                 <StackPanel Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource CRFVisibility}}">
-                    <TextBlock HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}">CRF</TextBlock>
+                    <TextBlock HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Name="VideoQualityLabel">CRF</TextBlock>
                     <ContentPresenter ContentTemplate="{StaticResource SliderOption}"
                                       Content="{x:Bind optionProps.RateFactorModel.CRFSlider}" />
                     <TextBlock HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}"
@@ -156,7 +156,7 @@
                         Preset
                     </TextBlock>
                     <ContentPresenter ContentTemplate="{StaticResource SliderOption}"
-                                      Content="{x:Bind optionProps.RateFactorModel.PresetSlider}" />
+                                      Content="{x:Bind optionProps.RateFactorModel.PresetSlider, Mode=OneWay}" />
                 </StackPanel>
                 <!--FPS-->
                 <ContentPresenter ContentTemplate="{StaticResource DropdownOption}" Content="{x:Bind optionProps.FpsModel}"
@@ -180,7 +180,13 @@
                                   Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource ImageQualityVisibility}}" />
             </Grid>
             <RadioButtons ItemsSource="{x:Bind optionProps.Options}" MaxColumns="{x:Bind optionProps.Columns}"
-                          SelectedItem="{x:Bind viewModel.SelectedOption, Mode=TwoWay}" HorizontalAlignment="Center" />
+                          SelectedItem="{x:Bind viewModel.SelectedOption, Mode=TwoWay}" HorizontalAlignment="Center">
+                <RadioButtons.ItemTemplate>
+                    <DataTemplate x:DataType="local:RadioItem">
+                        <TextBlock Text="{x:Bind Title, Mode=OneWay}" />
+                    </DataTemplate>
+                </RadioButtons.ItemTemplate>
+            </RadioButtons>
         </StackPanel>
         <controls:ProcessManager Grid.Row="4" x:Name="ProcessManager" State="{x:Bind viewModel.State, Mode=OneWay}" MaxWidth="700" OnlyPrimary="True"
                                  Processor="{x:Bind compressProcessor}" HardwareSelector="{x:Bind HardwareSelector}"/>

@@ -5,7 +5,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
-using System.Text;
 using WinUIShared.Enums;
 
 namespace CompressMediaPage
@@ -202,10 +201,19 @@ namespace CompressMediaPage
         }
     }
 
-    public class RateFactorModel
+    public class RateFactorModel: INotifyPropertyChanged
     {
         public SliderModel CRFSlider { get; set; }
-        public SliderModel PresetSlider { get; set; }
+        private SliderModel _presetslider;
+        public SliderModel PresetSlider
+        {
+            get => _presetslider;
+            set { _presetslider = value; OnPropertyChanged(); }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     public class OptionsProps
@@ -226,11 +234,20 @@ namespace CompressMediaPage
         public SliderModel ImageQuality { get; set; }
     }
 
-    public class RadioItem
+    public class RadioItem: INotifyPropertyChanged
     {
-        public string Title { get; set; }
+        private string _title;
+        public string Title
+        {
+            get => _title;
+            set { _title = value; OnPropertyChanged(); }
+        }
+
         public CompressionMethod Method { get; set; }
-        public override string ToString() => Title;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     public enum CompressionMethod

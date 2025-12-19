@@ -25,7 +25,6 @@ namespace CompressMediaPage
     public sealed partial class CompressMediaPage : Page
     {
         private string? navigateTo;
-        //private string ffmpegPath;
         private string? outputFile;
         private readonly double[] resolutionOptions = [144, 360, 480, 720, 1080, 1440, 2160];
         private readonly double[] audioBitrateOptions = [32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
@@ -98,7 +97,8 @@ namespace CompressMediaPage
             };
             optionProps.Columns = optionProps.Options.Count >= 3 ? 3 : optionProps.Options.Count;
             viewModel.SelectedOption = optionProps.Options[0];
-            //viewModel.SelectedOption = optionProps.Options.First();
+            HardwareSelector.Visibility = mediaType == MediaType.Video ? Visibility.Visible : Visibility.Collapsed;
+            HardwareSelector.RegisterPropertyChangedCallback(HardwareSelector.SelectedGpuProperty, OnGpuChanged);
             InitializeOptionModels();
             await CompleteOptionModels();
 
@@ -155,24 +155,14 @@ namespace CompressMediaPage
                 };
                 optionProps.RateFactorModel = new RateFactorModel
                 {
-                    CRFSlider = new SliderModel { Value = 25, Min = 10, Max = 40 },
-                    PresetSlider = new SliderModel
-                    {
-                        Value = 0, Min = -1, Max = 1, SmallWidth = true,
-                        ValueStringFunc = v => v switch
-                        {
-                            -1 => "fast",
-                            0 => "medium",
-                            1 => "slow",
-                            _ => throw new ArgumentOutOfRangeException()
-                        }
-                    }
+                    CRFSlider = new SliderModel { Value = 25, Min = 10, Max = 40 }
                 };
                 optionProps.AudioBitrateModel = GetDropdownModel(audioBitrateOptions, "bitrate", BitrateUnit);
                 optionProps.AudioSampleRateModel = GetDropdownModel(audioSampleRateOptions, "sample rate", "kHz");
                 optionProps.FpsModel = GetDropdownModel(fpsOptions, "fps", "FPS");
                 optionProps.AudioQuality = new SliderModel { Value = 2, Min = 0, Max = 9 };
                 optionProps.ImageQuality = new SliderModel { Value = 5, Min = 2, Max = 20 };
+                OnGpuChanged(HardwareSelector, HardwareSelector.SelectedGpuProperty);
             }
 
             async Task CompleteOptionModels()
@@ -296,49 +286,136 @@ namespace CompressMediaPage
         private async void Compress(object sender, RoutedEventArgs e)
         {
             viewModel.NewSize = null;
-                bool isAudio;
+            bool isAudio;
             Task processTask;
-                switch (viewModel.SelectedOption.Method)
-                {
-                    case CompressionMethod.Resolution:
-                        var width = optionProps.ResolutionModel.SelectedResolution.Width;
+            switch (viewModel.SelectedOption.Method)
+            {
+                case CompressionMethod.Resolution:
+                    var width = optionProps.ResolutionModel.SelectedResolution.Width;
                     if (width == 0) width = optionProps.ResolutionModel.CustomWidth;
-                        var isImage = optionProps.MediaType != MediaType.Video;
+                    var isImage = optionProps.MediaType != MediaType.Video;
                     processTask = compressProcessor.CompressResolution(width, isImage);
-                        break;
-                    case CompressionMethod.VideoBitrate or CompressionMethod.AudioBitrate:
-                        isAudio = optionProps.MediaType == MediaType.Audio;
-                        var bitrate = isAudio ? optionProps.AudioBitrateModel.SelectedValue.Value : optionProps.VideoBitrateViewModel.SpecifiedValue;
+                    break;
+                case CompressionMethod.VideoBitrate or CompressionMethod.AudioBitrate:
+                    isAudio = optionProps.MediaType == MediaType.Audio;
+                    var bitrate = isAudio ? optionProps.AudioBitrateModel.SelectedValue.Value : optionProps.VideoBitrateViewModel.SpecifiedValue;
                     processTask = compressProcessor.CompressBitrate(bitrate, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio);
-                        break;
-                    case CompressionMethod.FileSize:
-                        isAudio = optionProps.MediaType == MediaType.Audio;
-                        var size = optionProps.SizeViewModel.SpecifiedValue;
+                    break;
+                case CompressionMethod.FileSize:
+                    isAudio = optionProps.MediaType == MediaType.Audio;
+                    var size = optionProps.SizeViewModel.SpecifiedValue;
                     processTask = compressProcessor.CompressSize(size, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio);
-                        break;
-                    case CompressionMethod.FPS:
-                        var isGif = optionProps.MediaType == MediaType.ImageGif;
+                    break;
+                case CompressionMethod.FPS:
+                    var isGif = optionProps.MediaType == MediaType.ImageGif;
                     processTask = compressProcessor.CompressFps(optionProps.FpsModel.SelectedValue.Value, isGif);
-                        break;
-                    case CompressionMethod.CRF:
+                    break;
+                case CompressionMethod.CRF:
                     processTask = compressProcessor.CompressCrf(optionProps.RateFactorModel.CRFSlider.Value, optionProps.RateFactorModel.PresetSlider.ValueString);
-                        break;
-                    case CompressionMethod.QA:
+                    break;
+                case CompressionMethod.QA:
                     processTask = compressProcessor.CompressAudioQualityFactor(optionProps.AudioQuality.Value);
-                        break;
-                    case CompressionMethod.AR:
+                    break;
+                case CompressionMethod.AR:
                     processTask = compressProcessor.CompressAudioSamplingRate(optionProps.AudioSampleRateModel.SelectedValue.Value);
-                        break;
-                    case CompressionMethod.QV:
+                    break;
+                case CompressionMethod.QV:
                     processTask = compressProcessor.CompressImageQualityFactor(optionProps.ImageQuality.Value);
-                        break;
+                    break;
                 default: throw new NotImplementedException();
-                }
+            }
 
             compressProcessor.SetInitialProgressTexts();
             outputFile = await ProcessManager.StartProcess(processTask);
             if (outputFile != null) viewModel.NewSize = $"{Math.Round(compressProcessor.GetFileSize(outputFile!), 2)} {SizeUnit}";
+        }
+
+        private void OnGpuChanged(DependencyObject sender, DependencyProperty dp)
+        {
+            VideoQualityLabel.Text = HardwareSelector.SelectedGpu?.Vendor switch
+            {
+                GpuVendor.Nvidia or GpuVendor.Intel => "CQ",
+                GpuVendor.Amd => "QP",
+                _ => "CRF"
+            };
+            foreach (var compressOption in optionProps.Options)
+            {
+                if (compressOption.Method == CompressionMethod.CRF)
+                {
+                    compressOption.Title = HardwareSelector.SelectedGpu?.Vendor switch
+                    {
+                        GpuVendor.Nvidia or GpuVendor.Intel => "Constant Quality (CQ)",
+                        GpuVendor.Amd => "Constant QP (QP)",
+                        _ => "Constant Rate Factor (CRF)"
+                    };
+                }
             }
+            optionProps.RateFactorModel.PresetSlider = HardwareSelector.SelectedGpu?.Vendor switch
+            {
+                GpuVendor.Nvidia => new SliderModel
+                {
+                    Value = 0, Min = -2, Max = 9,
+                    ValueStringFunc = v => v switch
+                    {
+                        -2 => "default",
+                        -1 => "slow",
+                        0 => "medium",
+                        1 => "fast",
+                        2 => "hp",
+                        3 => "hq",
+                        4 => "bd",
+                        5 => "ll",
+                        6 => "llhq",
+                        7 => "llhp",
+                        8 => "lossless",
+                        9 => "losslesshp",
+                        _ => throw new ArgumentOutOfRangeException()
+                    }
+                },
+                GpuVendor.Amd => new SliderModel
+                {
+                    Value = 0, Min = -1, Max = 1, SmallWidth = true,
+                    ValueStringFunc = v => v switch
+                    {
+                        -1 => "speed",
+                        0 => "balanced",
+                        1 => "quality",
+                        _ => throw new ArgumentOutOfRangeException()
+                    }
+                },
+                GpuVendor.Intel => new SliderModel
+                {
+                    Value = 0, Min = -2, Max = 2,
+                    ValueStringFunc = v => v switch
+                    {
+                        -2 => "veryfast",
+                        -1 => "fast",
+                        0 => "medium",
+                        1 => "slow",
+                        2 => "veryslow",
+                        _ => throw new ArgumentOutOfRangeException()
+                    }
+                },
+                _ => new SliderModel
+                {
+                    Value = 0, Min = -5, Max = 4,
+                    ValueStringFunc = v => v switch
+                    {
+                        -5 => "ultrafast",
+                        -4 => "superfast",
+                        -3 => "veryfast",
+                        -2 => "faster",
+                        -1 => "fast",
+                        0 => "medium",
+                        1 => "slow",
+                        2 => "slower",
+                        3 => "veryslow",
+                        4 => "placebo",
+                        _ => throw new ArgumentOutOfRangeException()
+                    }
+                }
+            };
+        }
 
         private void GoBack()
         {
