@@ -29,7 +29,6 @@
                                             FalseValue="{StaticResource ControlContentThemeFontSize}" />
         <converters:BoolToObjectConverter x:Key="SliderWidth" TrueValue="200" FalseValue="500"/>
         <converters:BoolToObjectConverter x:Key="SizeOrBitrateText" TrueValue="bitrate" FalseValue="size"/>
-        <converters:BoolToObjectConverter x:Key="CompressingOrDoneConverter" TrueValue="Compressing..." FalseValue="Done"/>
         <converters:EmptyObjectToObjectConverter x:Key="ObjectToVisibilityConverter" EmptyValue="Collapsed" NotEmptyValue="Visible"/>
         <DataTemplate x:Key="SizeOrBitrate" x:DataType="local:SizeOrBitrateModel">
             <StackPanel HorizontalAlignment="Center" Spacing="5">
@@ -81,6 +80,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -181,17 +181,15 @@
             <RadioButtons ItemsSource="{x:Bind optionProps.Options}" MaxColumns="{x:Bind optionProps.Columns}"
                           SelectedItem="{x:Bind viewModel.SelectedOption, Mode=TwoWay}" HorizontalAlignment="Center" />
         </StackPanel>
-        <controls:ProcessProgress Grid.Row="4" x:Name="ProcessProgress" State="{x:Bind viewModel.State, Mode=OneWay}" MaxWidth="700"
-                                  LeftTextPrimary="{x:Bind viewModel.AfterOperation, Mode=OneWay, Converter={StaticResource CompressingOrDoneConverter}, ConverterParameter=True}"
-                                  PauseRequested="ProcessProgress_OnPauseRequested" ResumeRequested="ProcessProgress_OnResumeRequested"
-                                  ViewRequested="ProcessProgress_OnViewRequested" CancelRequested="ProcessProgress_OnCancelRequested"
-                                  CloseRequested="ProcessProgress_OnCloseRequested" OnlyPrimary="True"/>
+        <controls:ProcessManager Grid.Row="4" x:Name="ProcessManager" State="{x:Bind viewModel.State, Mode=OneWay}" MaxWidth="700" OnlyPrimary="True"
+                                 Processor="{x:Bind compressProcessor}" HardwareSelector="{x:Bind HardwareSelector}"/>
         <TextBlock Grid.Row="5" HorizontalAlignment="Center" Style="{StaticResource SubtitleTextBlockStyle}"
                    Visibility="{x:Bind viewModel.NewSize, Mode=OneWay, Converter={StaticResource ObjectToVisibilityConverter}}">
             <Run>New size: </Run>
             <Run Text="{x:Bind viewModel.NewSize, Mode=OneWay}"/>
         </TextBlock>
-        <Button HorizontalAlignment="Center" Grid.Row="6" Style="{StaticResource AccentButtonStyle}" Click="Compress" Width="400"
+        <controls:HardwareSelector Grid.Row="6" x:Name="HardwareSelector" Processor="{x:Bind compressProcessor}"/>
+        <Button HorizontalAlignment="Center" Grid.Row="7" Style="{StaticResource AccentButtonStyle}" Click="Compress" Width="400"
                 IsEnabled="{x:Bind viewModel.DuringOperation, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}">
             <Grid>
                 <StackPanel Orientation="Horizontal" Spacing="10">

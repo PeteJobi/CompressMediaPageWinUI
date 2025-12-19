@@ -12,8 +12,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using WinUIShared.Enums;
-using static System.Net.WebRequestMethods;
+using WinUIShared.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -183,7 +182,7 @@ namespace CompressMediaPage
                 {
                     case MediaType.Video or MediaType.ImageGif:
                     {
-                        var videoDetails = await compressProcessor.GetVideoDetails(ErrorActionFromFfmpeg);
+                        var videoDetails = await compressProcessor.GetVideoDetails();
                         if (failed) return;
 
                         if (optionProps.MediaType == MediaType.Video)
@@ -207,7 +206,7 @@ namespace CompressMediaPage
                     }
 
                     case MediaType.Audio:
-                        var audioDetails = await compressProcessor.GetAudioDetails(ErrorActionFromFfmpeg);
+                        var audioDetails = await compressProcessor.GetAudioDetails();
                         if (failed) return;
 
                         if (optionProps.SizeViewModel.SpecifiedValue == 0) //If the user hasn't changed it
@@ -222,20 +221,12 @@ namespace CompressMediaPage
 
                     case MediaType.ImageJpg:
                     case MediaType.ImagePng:
-                        var originalRes = await compressProcessor.GetImageResolution(ErrorActionFromFfmpeg);
+                        var originalRes = await compressProcessor.GetImageResolution();
                         if (failed) return;
                         SetResolutionModel(originalRes);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
-                }
-
-                async void ErrorActionFromFfmpeg(string message)
-                {
-                    failed = true;
-                    ErrorDialog.Title = "Compress operation failed";
-                    ErrorDialog.Content = message;
-                    await ErrorDialog.ShowAsync();
                 }
 
                 static void SetUpDropdownModel(DropdownModel model, double[] options, double originalValue)
@@ -304,119 +295,54 @@ namespace CompressMediaPage
 
         private async void Compress(object sender, RoutedEventArgs e)
         {
-            viewModel.State = OperationState.DuringOperation;
-            var valueProgress = new Progress<ValueProgress>(progress =>
-            {
-                ProcessProgress.ProgressPrimary = progress.ActionProgress;
-                ProcessProgress.RightTextPrimary = progress.ActionProgressText;
-            });
-            var failed = false;
-            string? errorMessage = null;
-
-            string? tempOutputFile = null;
-            outputFile = null;
             viewModel.NewSize = null;
-            try
-            {
                 bool isAudio;
+            Task processTask;
                 switch (viewModel.SelectedOption.Method)
                 {
                     case CompressionMethod.Resolution:
                         var width = optionProps.ResolutionModel.SelectedResolution.Width;
-                        if(width == 0) width = optionProps.ResolutionModel.CustomWidth;
+                    if (width == 0) width = optionProps.ResolutionModel.CustomWidth;
                         var isImage = optionProps.MediaType != MediaType.Video;
-                        await compressProcessor.CompressResolution(width, isImage, valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
+                    processTask = compressProcessor.CompressResolution(width, isImage);
                         break;
                     case CompressionMethod.VideoBitrate or CompressionMethod.AudioBitrate:
                         isAudio = optionProps.MediaType == MediaType.Audio;
                         var bitrate = isAudio ? optionProps.AudioBitrateModel.SelectedValue.Value : optionProps.VideoBitrateViewModel.SpecifiedValue;
-                        await compressProcessor.CompressBitrate(bitrate, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio,
-                            valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
+                    processTask = compressProcessor.CompressBitrate(bitrate, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio);
                         break;
                     case CompressionMethod.FileSize:
                         isAudio = optionProps.MediaType == MediaType.Audio;
                         var size = optionProps.SizeViewModel.SpecifiedValue;
-                        await compressProcessor.CompressSize(size, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio, valueProgress,
-                            SetOutputFile, ErrorActionFromFfmpeg);
+                    processTask = compressProcessor.CompressSize(size, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio);
                         break;
                     case CompressionMethod.FPS:
                         var isGif = optionProps.MediaType == MediaType.ImageGif;
-                        await compressProcessor.CompressFPS(optionProps.FpsModel.SelectedValue.Value, isGif, valueProgress,
-                            SetOutputFile, ErrorActionFromFfmpeg);
+                    processTask = compressProcessor.CompressFps(optionProps.FpsModel.SelectedValue.Value, isGif);
                         break;
                     case CompressionMethod.CRF:
-                        await compressProcessor.CompressCRF(optionProps.RateFactorModel.CRFSlider.Value, optionProps.RateFactorModel.PresetSlider.ValueString,
-                            valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
+                    processTask = compressProcessor.CompressCrf(optionProps.RateFactorModel.CRFSlider.Value, optionProps.RateFactorModel.PresetSlider.ValueString);
                         break;
                     case CompressionMethod.QA:
-                        await compressProcessor.CompressAudioQualityFactor(optionProps.AudioQuality.Value,
-                            valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
+                    processTask = compressProcessor.CompressAudioQualityFactor(optionProps.AudioQuality.Value);
                         break;
                     case CompressionMethod.AR:
-                        await compressProcessor.CompressAudioSamplingRate(optionProps.AudioSampleRateModel.SelectedValue.Value,
-                            valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
+                    processTask = compressProcessor.CompressAudioSamplingRate(optionProps.AudioSampleRateModel.SelectedValue.Value);
                         break;
                     case CompressionMethod.QV:
-                        await compressProcessor.CompressImageQualityFactor(optionProps.ImageQuality.Value,
-                            valueProgress, SetOutputFile, ErrorActionFromFfmpeg);
+                    processTask = compressProcessor.CompressImageQualityFactor(optionProps.ImageQuality.Value);
                         break;
+                default: throw new NotImplementedException();
                 }
 
-                if (viewModel.State == OperationState.BeforeOperation) return; //Canceled
-                if (failed)
-                {
-                    viewModel.State = OperationState.BeforeOperation;
-                    await ErrorAction(errorMessage!);
-                    await compressProcessor.Cancel(outputFile);
-                    return;
-                }
-
-                viewModel.State = OperationState.AfterOperation;
-                outputFile = tempOutputFile;
-                viewModel.NewSize = $"{Math.Round(compressProcessor.GetFileSize(outputFile!), 2)} {SizeUnit}";
+            compressProcessor.SetInitialProgressTexts();
+            outputFile = await ProcessManager.StartProcess(processTask);
+            if (outputFile != null) viewModel.NewSize = $"{Math.Round(compressProcessor.GetFileSize(outputFile!), 2)} {SizeUnit}";
             }
-            catch (Exception ex)
-            {
-                await ErrorAction(ex.Message);
-                viewModel.State = OperationState.BeforeOperation;
-            }
-
-            void ErrorActionFromFfmpeg(string message)
-            {
-                failed = true;
-                errorMessage = message;
-            }
-
-            void SetOutputFile(string file)
-            {
-                tempOutputFile = file;
-            }
-
-            async Task ErrorAction(string message)
-            {
-                ErrorDialog.Title = "Compress operation failed";
-                ErrorDialog.Content = message;
-                await ErrorDialog.ShowAsync();
-            }
-        }
-
-        private void ProcessProgress_OnPauseRequested(object? sender, EventArgs e) => compressProcessor.Pause();
-
-        private void ProcessProgress_OnResumeRequested(object? sender, EventArgs e) => compressProcessor.Resume();
-
-        private void ProcessProgress_OnViewRequested(object? sender, EventArgs e) => compressProcessor.ViewFile(outputFile);
-
-        private async void ProcessProgress_OnCancelRequested(object? sender, EventArgs e)
-        {
-            await compressProcessor.Cancel(outputFile);
-            viewModel.State = OperationState.BeforeOperation;
-        }
-
-        private void ProcessProgress_OnCloseRequested(object? sender, EventArgs e) => viewModel.State = OperationState.BeforeOperation;
 
         private void GoBack()
         {
-            _ = compressProcessor.Cancel(outputFile);
+            _ = compressProcessor.Cancel();
             if (navigateTo == null) Frame.GoBack();
             else Frame.NavigateToType(Type.GetType(navigateTo), outputFile, new FrameNavigationOptions { IsNavigationStackEnabled = false });
         }
