@@ -47,6 +47,7 @@ namespace CompressMediaPage
         {
             if (e.Parameter is not CompressProps props) return;
             navigateTo = props.TypeToNavigateTo;
+            HardwareSelector.SelectedGpu = props.Gpu;
             compressProcessor = new CompressProcessor(props.FfmpegPath, props.MediaPath);
             await ProcessMedia(props.MediaPath);
         }
@@ -434,6 +435,7 @@ namespace CompressMediaPage
         public string FfmpegPath { get; set; }
         public string MediaPath { get; set; }
         public string? TypeToNavigateTo { get; set; }
+        public GpuInfo? Gpu { get; set; }
     }
 
     public class EnumToVisibilityConverter: EnumToVisibilityConverter<CompressionMethod>;
