@@ -9,19 +9,18 @@
     xmlns:converters="using:CommunityToolkit.WinUI.Converters"
     xmlns:drawing="using:System.Drawing"
     xmlns:controls="using:WinUIShared.Controls"
-    xmlns:helpers="using:WinUIShared.Helpers"
     mc:Ignorable="d">
     <Page.Resources>
         <x:Double x:Key="BigFontSize">30</x:Double>
-        <helpers:EnumToVisibilityConverter x:Key="FileSizeVisibility" Enum="FileSize"/>
-		<helpers:EnumToVisibilityConverter x:Key="VideoBitrateVisibility" Enum="VideoBitrate"/>
-		<helpers:EnumToVisibilityConverter x:Key="ResolutionVisibility" Enum="Resolution"/>
-		<helpers:EnumToVisibilityConverter x:Key="CRFVisibility" Enum="CRF"/>
-		<helpers:EnumToVisibilityConverter x:Key="AudioBitrateVisibility" Enum="AudioBitrate"/>
-		<helpers:EnumToVisibilityConverter x:Key="AudioSampleRateVisibility" Enum="AR"/>
-		<helpers:EnumToVisibilityConverter x:Key="AudioQualityVisibility" Enum="QA"/>
-		<helpers:EnumToVisibilityConverter x:Key="ImageQualityVisibility" Enum="QV"/>
-        <helpers:EnumToVisibilityConverter x:Key="FPSVisibility" Enum="FPS"/>
+        <local:EnumToVisibilityConverter x:Key="FileSizeVisibility" Enum="FileSize"/>
+		<local:EnumToVisibilityConverter x:Key="VideoBitrateVisibility" Enum="VideoBitrate"/>
+		<local:EnumToVisibilityConverter x:Key="ResolutionVisibility" Enum="Resolution"/>
+		<local:EnumToVisibilityConverter x:Key="CRFVisibility" Enum="CRF"/>
+		<local:EnumToVisibilityConverter x:Key="AudioBitrateVisibility" Enum="AudioBitrate"/>
+		<local:EnumToVisibilityConverter x:Key="AudioSampleRateVisibility" Enum="AR"/>
+		<local:EnumToVisibilityConverter x:Key="AudioQualityVisibility" Enum="QA"/>
+		<local:EnumToVisibilityConverter x:Key="ImageQualityVisibility" Enum="QV"/>
+        <local:EnumToVisibilityConverter x:Key="FPSVisibility" Enum="FPS"/>
         <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
         <converters:DoubleToVisibilityConverter x:Key="DoubleToVisibilityConverter" GreaterThan="0" />
         <converters:DoubleToObjectConverter x:Key="CustomResVisibility" LessThan="1" TrueValue="Collapsed" FalseValue="Visible" />

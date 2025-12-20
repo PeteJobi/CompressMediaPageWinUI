@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using WinUIShared.Controls;
+using WinUIShared.Helpers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -433,4 +434,6 @@ namespace CompressMediaPage
         public string MediaPath { get; set; }
         public string? TypeToNavigateTo { get; set; }
     }
+
+    public class EnumToVisibilityConverter: EnumToVisibilityConverter<CompressionMethod>;
 }
