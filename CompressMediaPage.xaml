@@ -187,14 +187,14 @@
                 </RadioButtons.ItemTemplate>
             </RadioButtons>
         </StackPanel>
-        <controls:ProcessManager Grid.Row="4" x:Name="ProcessManager" State="{x:Bind viewModel.State, Mode=OneWay}" MaxWidth="700" OnlyPrimary="True"
+        <controls:ProcessManager Grid.Row="4" x:Name="ProcessManager" State="{x:Bind viewModel.State, Mode=OneWay}" MaxWidth="{x:Bind pageMaxWidth}" OnlyPrimary="True"
                                  Processor="{x:Bind compressProcessor}" HardwareSelector="{x:Bind HardwareSelector}"/>
         <TextBlock Grid.Row="5" HorizontalAlignment="Center" Style="{StaticResource SubtitleTextBlockStyle}"
                    Visibility="{x:Bind viewModel.NewSize, Mode=OneWay, Converter={StaticResource ObjectToVisibilityConverter}}">
             <Run>New size: </Run>
             <Run Text="{x:Bind viewModel.NewSize, Mode=OneWay}"/>
         </TextBlock>
-        <controls:HardwareSelector Grid.Row="6" x:Name="HardwareSelector" Processor="{x:Bind compressProcessor}"/>
+        <controls:HardwareSelector Grid.Row="6" x:Name="HardwareSelector" MaxWidth="{x:Bind pageMaxWidth}"/>
         <Button HorizontalAlignment="Center" Grid.Row="7" Style="{StaticResource AccentButtonStyle}" Click="Compress" Width="400"
                 IsEnabled="{x:Bind viewModel.DuringOperation, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}">
             <Grid>

@@ -27,6 +27,7 @@ namespace CompressMediaPage
     {
         private string? navigateTo;
         private string? outputFile;
+        private readonly double pageMaxWidth = 700;
         private readonly double[] resolutionOptions = [144, 360, 480, 720, 1080, 1440, 2160];
         private readonly double[] audioBitrateOptions = [32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
         private readonly double[] audioSampleRateOptions = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000];
