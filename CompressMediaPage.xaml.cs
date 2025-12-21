@@ -289,8 +289,10 @@ namespace CompressMediaPage
         private async void Compress(object sender, RoutedEventArgs e)
         {
             viewModel.NewSize = null;
+            outputFile = null;
             bool isAudio;
             Task processTask;
+            compressProcessor.SetInitialProgressTexts();
             switch (viewModel.SelectedOption.Method)
             {
                 case CompressionMethod.Resolution:
@@ -328,7 +330,6 @@ namespace CompressMediaPage
                 default: throw new NotImplementedException();
             }
 
-            compressProcessor.SetInitialProgressTexts();
             outputFile = await ProcessManager.StartProcess(processTask);
             if (outputFile != null) viewModel.NewSize = $"{Math.Round(compressProcessor.GetFileSize(outputFile!), 2)} {SizeUnit}";
         }
