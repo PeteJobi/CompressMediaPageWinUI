@@ -10,7 +10,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using WinUIShared.Controls;
 using WinUIShared.Helpers;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CompressMediaPage
 {
