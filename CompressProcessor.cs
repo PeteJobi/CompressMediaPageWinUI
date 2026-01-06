@@ -183,7 +183,7 @@ namespace CompressMediaPage
             else
             {
                 await StartFfmpegTranscodingProcess([mediaPath], GetOutputName(mediaPath), "-threads 1",
-                    $"-fps_mode passthrough -rc vbr -b:v {bitrate} {limitToTargetCommand} -c:v {GpuInfo.EncodingParamsDict[gpuInfo?.Vendor ?? GpuVendor.None]} -c:a copy",
+                    $"-fps_mode passthrough -rc vbr -b:v {bitrate} {limitToTargetCommand} -c:v {GpuInfo.EncodingParams(gpuInfo)} -c:a copy",
                     ProgressHandler, X265LineWatcher);
             }
             if (HasBeenKilled()) return;
