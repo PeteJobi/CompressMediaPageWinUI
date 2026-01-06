@@ -67,9 +67,9 @@
                     <Run>: </Run>
                     <Run Text="{x:Bind OriginalValue, Mode=OneWay}" />
                 </TextBlock>
-                <ComboBox ItemsSource="{x:Bind Options}" HorizontalAlignment="Center"
-                          SelectedItem="{x:Bind SelectedValue, Mode=TwoWay}"
-                          FontSize="{StaticResource BigFontSize}" />
+                <controls:ComboBoxEx ItemsSource="{x:Bind Options}" HorizontalAlignment="Center"
+                                     SelectedItem="{x:Bind SelectedValue, Mode=TwoWay}"
+                                     FontSize="{StaticResource BigFontSize}" />
             </StackPanel>
         </DataTemplate>
     </Page.Resources>
@@ -112,10 +112,10 @@
                     <ContentPresenter ContentTemplate="{StaticResource OriginalResText}"
                                       Content="{x:Bind optionProps.ResolutionModel.OriginalResolution, Mode=OneWay}"
                                       Visibility="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource CustomResVisibility}}" />
-                    <ComboBox ItemsSource="{x:Bind optionProps.ResolutionModel.Options}" HorizontalAlignment="Center"
+                    <controls:ComboBoxEx ItemsSource="{x:Bind optionProps.ResolutionModel.Options}" HorizontalAlignment="Center"
                               SelectedItem="{x:Bind optionProps.ResolutionModel.SelectedResolution, Mode=TwoWay}"
                               FontSize="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource ResolutionToFontSizeConverter}}">
-                        <ComboBox.ItemTemplate>
+                        <controls:ComboBoxEx.ItemTemplate>
                             <DataTemplate x:DataType="drawing:Size">
                                 <Grid>
                                     <TextBlock
@@ -130,8 +130,8 @@
                                     </TextBlock>
                                 </Grid>
                             </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                        </controls:ComboBoxEx.ItemTemplate>
+                    </controls:ComboBoxEx>
                     <ContentPresenter ContentTemplate="{StaticResource OriginalResText}"
                                       Content="{x:Bind optionProps.ResolutionModel.OriginalResolution, Mode=OneWay}"
                                       Margin="0,20,0,0"
