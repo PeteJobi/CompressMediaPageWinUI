@@ -26,7 +26,6 @@ namespace CompressMediaPage
             {
                 Debug.WriteLine(args.Data);
                 if (valuesSet || string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
-                if (CheckFileNameLongError(args.Data)) return;
                 var matchCollection = Regex.Matches(args.Data, @"\s*Stream #\d+:\d+.*?: Video: .+?, (\d+)x(\d+).*?,(?: (\d+) kb/s,)? (\d+?\.?\d*?) fps");
                 if (matchCollection.Count == 0) return;
                 width = int.Parse(matchCollection[0].Groups[1].Value);
@@ -55,7 +54,6 @@ namespace CompressMediaPage
             {
                 Debug.WriteLine(args.Data);
                 if (valuesSet || string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
-                if (CheckFileNameLongError(args.Data)) return;
                 var matchCollection = Regex.Matches(args.Data, @"\s*Stream #\d+:\d+.*?: Audio: .+?, (\d+) Hz.+?, (\d+) kb/s");
                 if (matchCollection.Count == 0) return;
                 sampleRate = int.Parse(matchCollection[0].Groups[1].Value);
@@ -79,7 +77,6 @@ namespace CompressMediaPage
             {
                 Debug.WriteLine(args.Data);
                 if (valuesSet || string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
-                if (CheckFileNameLongError(args.Data)) return;
                 var matchCollection = Regex.Matches(args.Data, @"\s*Stream #\d+:\d+.*?: Video: .+?, (\d+)x(\d+)");
                 if (matchCollection.Count == 0) return;
                 width = int.Parse(matchCollection[0].Groups[1].Value);
@@ -237,7 +234,6 @@ namespace CompressMediaPage
             {
                 Debug.WriteLine(args.Data);
                 if (string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
-                if (CheckFileNameLongError(args.Data)) return;
                 if (duration == TimeSpan.MinValue)
                 {
                     var matchCollection = Regex.Matches(args.Data, @"\s*Duration:\s(\d{2}:\d{2}:\d{2}\.\d{2}).+");
