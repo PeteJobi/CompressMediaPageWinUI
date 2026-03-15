@@ -103,13 +103,25 @@ namespace CompressMediaPage
         public async Task CompressResolution(int width, bool isImage)
         {
             var cpuScaleParam = $"scale={width}:-1";
-            var scaleParams = gpuInfo?.Vendor switch
+            string scaleParams;
+            switch (gpuInfo?.Vendor)
             {
-                GpuVendor.Nvidia => $"scale_cuda=w={width}:h={width}*ih/iw",
-                GpuVendor.Amd => $"hwdownload,format=nv12,scale={width}:-1",
-                GpuVendor.Intel => $"scale_qsv=w={width}:h={width}*ih/iw",
-                _ => cpuScaleParam
-            };
+                case GpuVendor.Nvidia:
+                    scaleParams = $"scale_cuda=w={width}:h={width}*ih/iw";
+                    break;
+                case GpuVendor.Amd:
+                    var gpuPixelFormat = await GetGpuPixelFormat(mediaPath);
+                    var (hwDownArgs, hwUpArgs) = GpuInfo.FilterParams(gpuInfo, gpuPixelFormat);
+                    scaleParams = $"{hwDownArgs}scale={width}:-1{hwUpArgs}";
+                    break;
+                case GpuVendor.Intel:
+                    scaleParams = $"scale_qsv=w={width}:h={width}*ih/iw";
+                    break;
+                default:
+                    scaleParams = cpuScaleParam;
+                    break;
+            }
+
             if (isImage)
             {
                 await StartFfmpegProcess($"-i \"{mediaPath}\" -vf \"{cpuScaleParam}\" \"{GetOutputName(mediaPath)}\"", ProgressHandler); // Images do not support hardware acceleration. (they do, but it is not worth the complexity)
