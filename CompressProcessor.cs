@@ -13,7 +13,7 @@ using WinUIShared.Helpers;
 
 namespace CompressMediaPage
 {
-    public class CompressProcessor(string ffmpegPath, string mediaPath) : Processor(ffmpegPath)
+    public class CompressProcessor(string ffmpegPath, string mediaPath) : Processor(ffmpegPath, new FileLogger.FileLogger($"{nameof(ReelBox)}/Compress"))
     {
         public async Task<VideoDetails> GetVideoDetails()
         {
@@ -245,6 +245,7 @@ namespace CompressMediaPage
             await StartFfmpegProcess($"-i \"{mediaPath}\" {extraArguments} \"{GetOutputName(mediaPath)}\"", (sender, args) =>
             {
                 Debug.WriteLine(args.Data);
+                logger.Log(args.Data);
                 if (string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
                 if (duration == TimeSpan.MinValue)
                 {
