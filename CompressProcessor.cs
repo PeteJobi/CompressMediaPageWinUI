@@ -115,7 +115,7 @@ namespace CompressMediaPage
                     scaleParams = $"{hwDownArgs}scale={width}:-1{hwUpArgs}";
                     break;
                 case GpuVendor.Intel:
-                    scaleParams = $"scale_qsv=w={width}:h={width}*ih/iw";
+                    scaleParams = $"vpp_qsv=w={width}:h={width}*ih/iw";
                     break;
                 default:
                     scaleParams = cpuScaleParam;
