@@ -22,7 +22,7 @@ namespace CompressMediaPage
             int width = 0, height = 0;
             var valuesSet = false;
 
-            await StartFfmpegProcess($"-i \"{mediaPath}\"", (sender, args) =>
+            await Ffmpeg().Input(mediaPath).NoOutput().ErrorHandler((sender, args) =>
             {
                 Debug.WriteLine(args.Data);
                 if (valuesSet || string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
@@ -33,7 +33,7 @@ namespace CompressMediaPage
                 _ = double.TryParse(matchCollection[0].Groups[3].Value, out bitrate);
                 fps = double.Parse(matchCollection[0].Groups[4].Value);
                 valuesSet = true;
-            });
+            }).StartPlainProcess();
 
             return new VideoDetails
             {
@@ -50,7 +50,7 @@ namespace CompressMediaPage
             int bitrate = 0, sampleRate = 0;
             var valuesSet = false;
 
-            await StartFfmpegProcess($"-i \"{mediaPath}\"", (sender, args) =>
+            await Ffmpeg().Input(mediaPath).NoOutput().ErrorHandler((sender, args) =>
             {
                 Debug.WriteLine(args.Data);
                 if (valuesSet || string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
@@ -59,7 +59,7 @@ namespace CompressMediaPage
                 sampleRate = int.Parse(matchCollection[0].Groups[1].Value);
                 bitrate = int.Parse(matchCollection[0].Groups[2].Value);
                 valuesSet = true;
-            });
+            }).StartPlainProcess();
 
             return new AudioDetails
             {
@@ -73,7 +73,7 @@ namespace CompressMediaPage
         {
             int width = 0, height = 0;
             var valuesSet = false;
-            await StartFfmpegProcess($"-i \"{mediaPath}\"", (sender, args) =>
+            await Ffmpeg().Input(mediaPath).NoOutput().ErrorHandler((sender, args) =>
             {
                 Debug.WriteLine(args.Data);
                 if (valuesSet || string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
@@ -82,7 +82,7 @@ namespace CompressMediaPage
                 width = int.Parse(matchCollection[0].Groups[1].Value);
                 height = int.Parse(matchCollection[0].Groups[2].Value);
                 valuesSet = true;
-            });
+            }).StartPlainProcess();
 
             return new Size(width, height);
         }
@@ -102,34 +102,39 @@ namespace CompressMediaPage
 
         public async Task CompressResolution(int width, bool isImage)
         {
-            var cpuScaleParam = $"scale={width}:-1";
-            string scaleParams;
+            var cpuScaleFilter = $"scale={width}:-1";
+            string scaleFilter;
             switch (gpuInfo?.Vendor)
             {
                 case GpuVendor.Nvidia:
-                    scaleParams = $"scale_cuda=w={width}:h={width}*ih/iw";
+                    scaleFilter = $"scale_cuda=w={width}:h={width}*ih/iw";
                     break;
                 case GpuVendor.Amd:
                     var gpuPixelFormat = await GetGpuPixelFormat(mediaPath);
                     var (hwDownArgs, hwUpArgs) = GpuInfo.FilterParams(gpuInfo, gpuPixelFormat);
-                    scaleParams = $"{hwDownArgs}scale={width}:-1{hwUpArgs}";
+                    scaleFilter = $"{hwDownArgs}scale={width}:-1{hwUpArgs}";
                     break;
                 case GpuVendor.Intel:
-                    scaleParams = $"vpp_qsv=w={width}:h={width}*ih/iw";
+                    scaleFilter = $"vpp_qsv=w={width}:h={width}*ih/iw";
                     break;
                 default:
-                    scaleParams = cpuScaleParam;
+                    scaleFilter = cpuScaleFilter;
                     break;
             }
 
             if (isImage)
             {
-                await StartFfmpegProcess($"-i \"{mediaPath}\" -vf \"{cpuScaleParam}\" \"{GetOutputName(mediaPath)}\"", ProgressHandler); // Images do not support hardware acceleration. (they do, but it is not worth the complexity)
+                await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath))
+                    .VideoFilter(cpuScaleFilter)
+                    .ProgressHandler(ProgressHandler)
+                    .StartPlainProcess(); // Images do not support hardware acceleration. (they do, but it is not worth the complexity)
             }
             else
             {
-                await StartFfmpegTranscodingProcessDefaultQuality([mediaPath], GetOutputName(mediaPath), $"-vf \"{scaleParams}\"", 
-                    ProgressHandler, X265LineWatcher);
+                await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath))
+                    .VideoFilter(scaleFilter)
+                    .ProgressHandler(ProgressHandler, X265LineWatcher)
+                    .StartTranscodingProcess();
             }
             if (HasBeenKilled()) return;
             AllDone();
@@ -140,11 +145,14 @@ namespace CompressMediaPage
             var fpsParam = $"-r {fps}";
             if (isGif)
             {
-                await StartFfmpegProcess($"-i \"{mediaPath}\" {fpsParam} \"{GetOutputName(mediaPath)}\"", ProgressHandler); // GIFs do not support hardware acceleration
+                await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath)).ArgumentsAfterInput(fpsParam).ProgressHandler(ProgressHandler).StartPlainProcess(); // GIFs do not support hardware acceleration
             }
             else
             {
-                await StartFfmpegTranscodingProcessDefaultQuality([mediaPath], GetOutputName(mediaPath), $"-fps_mode auto {fpsParam}", ProgressHandler, X265LineWatcher);
+                await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath))
+                    .ArgumentsAfterInput($"-fps_mode auto {fpsParam}")
+                    .ProgressHandler(ProgressHandler, X265LineWatcher)
+                    .StartTranscodingProcess();
             }
             if (HasBeenKilled()) return;
             AllDone();
@@ -154,7 +162,7 @@ namespace CompressMediaPage
         {
             var duration = TimeSpan.MinValue;
             var parsedAudioBitrate = 0;
-            await StartFfmpegProcess($"-i \"{mediaPath}\"", (sender, args) =>
+            await Ffmpeg().Input(mediaPath).NoOutput().ErrorHandler((sender, args) =>
             {
                 if (string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
                 if (duration == TimeSpan.MinValue)
@@ -169,7 +177,7 @@ namespace CompressMediaPage
                     if (matchCollection.Count == 0) return;
                     parsedAudioBitrate = int.Parse(matchCollection[0].Groups[1].Value);
                 }
-            });
+            }).StartPlainProcess();
 
             var totalBitrate = sizeInMb * 1000 * 8 / duration.TotalSeconds; // in bits per second
             if (!isAudio)
@@ -191,9 +199,11 @@ namespace CompressMediaPage
             }
             else
             {
-                await StartFfmpegTranscodingProcess([mediaPath], GetOutputName(mediaPath), "-threads 1",
-                    $"-fps_mode passthrough -rc vbr -b:v {bitrate} {limitToTargetCommand} -c:v {GpuInfo.EncodingParams(gpuInfo)} -c:a copy",
-                    ProgressHandler, X265LineWatcher);
+                await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath))
+                    .ArgumentsAfterInput($"-rc vbr -b:v {bitrate} {limitToTargetCommand}")
+                    .DontAddQuality()
+                    .ProgressHandler(ProgressHandler, X265LineWatcher)
+                    .StartTranscodingProcess();
             }
             if (HasBeenKilled()) return;
             AllDone();
@@ -201,15 +211,17 @@ namespace CompressMediaPage
 
         public async Task CompressCrf(int crf, string preset)
         {
-            await StartFfmpegTranscodingProcess([mediaPath], GetOutputName(mediaPath), crf, preset, string.Empty,
-                ProgressHandler, X265LineWatcher);
+            await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath))
+                .Quality(crf).Preset(preset)
+                .ProgressHandler(ProgressHandler, X265LineWatcher)
+                .StartTranscodingProcess();
             if (HasBeenKilled()) return;
             AllDone();
         }
 
         public async Task CompressAudioQualityFactor(int qa)
         {
-            await StartProcessForAudioOrImage($"-c:a libmp3lame -q:a {qa}");
+            await StartProcessForAudioOrImage($"-q:a {qa}");
             if (HasBeenKilled()) return;
             AllDone();
         }
@@ -217,7 +229,7 @@ namespace CompressMediaPage
         public async Task CompressAudioSamplingRate(double ar)
         {
             var parsedAudioBitrate = 0;
-            await StartFfmpegProcess($"-i \"{mediaPath}\"", (sender, args) =>
+            await Ffmpeg().Input(mediaPath).NoOutput().ErrorHandler((sender, args) =>
             {
                 if (string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
                 Debug.WriteLine(args.Data);
@@ -225,9 +237,9 @@ namespace CompressMediaPage
                 var matchCollection = Regex.Matches(args.Data, @"\s*Stream .+: Audio: .+ (\d+) kb/s");
                 if (matchCollection.Count == 0) return;
                 parsedAudioBitrate = int.Parse(matchCollection[0].Groups[1].Value);
-            });
+            }).StartPlainProcess();
 
-            await StartProcessForAudioOrImage($"-c:a libmp3lame -ar {ar} -b:a {parsedAudioBitrate * 1000}");
+            await StartProcessForAudioOrImage($"-ar {ar} -b:a {parsedAudioBitrate * 1000}");
             if (HasBeenKilled()) return;
             AllDone();
         }
@@ -241,26 +253,8 @@ namespace CompressMediaPage
 
         private async Task StartProcessForAudioOrImage(string extraArguments)
         {
-            var duration = TimeSpan.MinValue;
-            await StartFfmpegProcess($"-i \"{mediaPath}\" {extraArguments} \"{GetOutputName(mediaPath)}\"", (sender, args) =>
-            {
-                Debug.WriteLine(args.Data);
-                logger.Log(args.Data);
-                if (string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
-                if (duration == TimeSpan.MinValue)
-                {
-                    var matchCollection = Regex.Matches(args.Data, @"\s*Duration:\s(\d{2}:\d{2}:\d{2}\.\d{2}).+");
-                    if (matchCollection.Count == 0) return;
-                    duration = TimeSpan.Parse(matchCollection[0].Groups[1].Value);
-                }
-                if (!args.Data.StartsWith("size")) return;
-                if (!CheckNoSpaceDuringProcess(args.Data))
-                {
-                    var matchCollection = Regex.Matches(args.Data, @"^size=\s*\d+KiB.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
-                    if (matchCollection.Count == 0) return;
-                    IncrementProgress(TimeSpan.Parse(matchCollection[0].Groups[1].Value) / duration * 100);
-                }
-            });
+            await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath)).ArgumentsAfterInput(extraArguments)
+                .ProgressHandler(ProgressHandler).StartPlainProcess();
         }
 
         public static MediaType GetMediaType(string path)
