@@ -61,14 +61,9 @@ namespace CompressMediaPage
             }
             catch (NotSupportedException)
             {
-                ErrorDialog.Title = "Unsupported media type";
-                ErrorDialog.Content = "The file you selected is currently not supported by this application.";
-                ErrorDialog.Loaded += async (s, e) =>
-                {
                     Grid.Visibility = Visibility.Collapsed;
-                    await ErrorDialog.ShowAsync();
+                await ProcessManager.ShowDialog("Unsupported media type", "The file you selected is currently not supported by this application.");
                     GoBack();
-                };
                 return;
             }
 

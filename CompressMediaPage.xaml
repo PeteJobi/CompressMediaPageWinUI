@@ -206,6 +206,5 @@
                 </StackPanel>
             </Grid>
         </Button>
-        <ContentDialog Name="ErrorDialog" IsPrimaryButtonEnabled="True" PrimaryButtonText="Ok"/>
     </Grid>
 </Page>
