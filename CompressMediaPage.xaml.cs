@@ -61,9 +61,9 @@ namespace CompressMediaPage
             }
             catch (NotSupportedException)
             {
-                    Grid.Visibility = Visibility.Collapsed;
+                Grid.Visibility = Visibility.Collapsed;
                 await ProcessManager.ShowDialog("Unsupported media type", "The file you selected is currently not supported by this application.");
-                    GoBack();
+                GoBack();
                 return;
             }
 
@@ -72,26 +72,29 @@ namespace CompressMediaPage
                 MediaType = mediaType,
                 FileName = CompressProcessor.GetFileName(path),
                 IconGlyph = GetIconGlyph(mediaType),
-                Options = new ObservableCollection<RadioItem>(mediaType switch
-                {
-                    MediaType.Video => GetRadioItemsForCompMethods([
-                        CompressionMethod.FileSize, CompressionMethod.VideoBitrate, CompressionMethod.Resolution,
-                        CompressionMethod.CRF, CompressionMethod.FPS
-                    ]),
-                    MediaType.Audio => GetRadioItemsForCompMethods([
-                        CompressionMethod.FileSize, CompressionMethod.AudioBitrate, CompressionMethod.QA, CompressionMethod.AR
-                    ]),
-                    MediaType.ImageJpg => GetRadioItemsForCompMethods([
-                        CompressionMethod.Resolution, CompressionMethod.QV
-                    ]),
-                    MediaType.ImagePng => GetRadioItemsForCompMethods([
-                        CompressionMethod.Resolution
-                    ]),
-                    MediaType.ImageGif => GetRadioItemsForCompMethods([
-                        CompressionMethod.Resolution, CompressionMethod.FPS
-                    ]),
-                    _ => throw new ArgumentOutOfRangeException()
-                })
+                Options =
+                [
+                    .. mediaType switch
+                    {
+                        MediaType.Video => GetRadioItemsForCompMethods([
+                            CompressionMethod.FileSize, CompressionMethod.VideoBitrate, CompressionMethod.Resolution,
+                            CompressionMethod.CRF, CompressionMethod.FPS
+                        ]),
+                        MediaType.Audio => GetRadioItemsForCompMethods([
+                            CompressionMethod.FileSize, CompressionMethod.AudioBitrate, CompressionMethod.QA, CompressionMethod.AR
+                        ]),
+                        MediaType.ImageJpg => GetRadioItemsForCompMethods([
+                            CompressionMethod.Resolution, CompressionMethod.QV
+                        ]),
+                        MediaType.ImagePng => GetRadioItemsForCompMethods([
+                            CompressionMethod.Resolution
+                        ]),
+                        MediaType.ImageGif => GetRadioItemsForCompMethods([
+                            CompressionMethod.Resolution, CompressionMethod.FPS
+                        ]),
+                        _ => throw new ArgumentOutOfRangeException()
+                    }
+                ]
             };
             optionProps.Columns = optionProps.Options.Count >= 3 ? 3 : optionProps.Options.Count;
             viewModel.SelectedOption = optionProps.Options[0];
@@ -165,13 +168,12 @@ namespace CompressMediaPage
 
             async Task CompleteOptionModels()
             {
-                var failed = false;
                 switch (optionProps.MediaType)
                 {
                     case MediaType.Video or MediaType.ImageGif:
                     {
-                        var videoDetails = await compressProcessor.GetVideoDetails();
-                        if (failed) return;
+                        var videoDetails = await ProcessManager.StartSimpleProcess(() => compressProcessor.GetVideoDetails());
+                        if(videoDetails.Size == 0) return;
 
                         if (optionProps.MediaType == MediaType.Video)
                         {
@@ -194,8 +196,8 @@ namespace CompressMediaPage
                     }
 
                     case MediaType.Audio:
-                        var audioDetails = await compressProcessor.GetAudioDetails();
-                        if (failed) return;
+                        var audioDetails = await ProcessManager.StartSimpleProcess(() => compressProcessor.GetAudioDetails());
+                        if(audioDetails.Size == 0) return;
 
                         if (optionProps.SizeViewModel.SpecifiedValue == 0) //If the user hasn't changed it
                         {
@@ -209,8 +211,8 @@ namespace CompressMediaPage
 
                     case MediaType.ImageJpg:
                     case MediaType.ImagePng:
-                        var originalRes = await compressProcessor.GetImageResolution();
-                        if (failed) return;
+                        var originalRes = await ProcessManager.StartSimpleProcess(() => compressProcessor.GetImageResolution());
+                        if(originalRes.Width == 0 || originalRes.Height == 0) return;
                         SetResolutionModel(originalRes);
                         break;
                     default:
@@ -286,7 +288,7 @@ namespace CompressMediaPage
             viewModel.NewSize = null;
             outputFile = null;
             bool isAudio;
-            Task processTask;
+            Func<Task> processTask;
             compressProcessor.SetInitialProgressTexts();
             switch (viewModel.SelectedOption.Method)
             {
@@ -294,33 +296,33 @@ namespace CompressMediaPage
                     var width = optionProps.ResolutionModel.SelectedResolution.Width;
                     if (width == 0) width = optionProps.ResolutionModel.CustomWidth;
                     var isImage = optionProps.MediaType != MediaType.Video;
-                    processTask = compressProcessor.CompressResolution(width, isImage);
+                    processTask = () => compressProcessor.CompressResolution(width, isImage);
                     break;
                 case CompressionMethod.VideoBitrate or CompressionMethod.AudioBitrate:
                     isAudio = optionProps.MediaType == MediaType.Audio;
                     var bitrate = isAudio ? optionProps.AudioBitrateModel.SelectedValue.Value : optionProps.VideoBitrateViewModel.SpecifiedValue;
-                    processTask = compressProcessor.CompressBitrate(bitrate, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio);
+                    processTask = () => compressProcessor.CompressBitrate(bitrate, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio);
                     break;
                 case CompressionMethod.FileSize:
                     isAudio = optionProps.MediaType == MediaType.Audio;
                     var size = optionProps.SizeViewModel.SpecifiedValue;
-                    processTask = compressProcessor.CompressSize(size, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio);
+                    processTask = () => compressProcessor.CompressSize(size, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio);
                     break;
                 case CompressionMethod.FPS:
                     var isGif = optionProps.MediaType == MediaType.ImageGif;
-                    processTask = compressProcessor.CompressFps(optionProps.FpsModel.SelectedValue.Value, isGif);
+                    processTask = () => compressProcessor.CompressFps(optionProps.FpsModel.SelectedValue.Value, isGif);
                     break;
                 case CompressionMethod.CRF:
-                    processTask = compressProcessor.CompressCrf(optionProps.RateFactorModel.CRFSlider.Value, optionProps.RateFactorModel.PresetSlider.ValueString);
+                    processTask = () => compressProcessor.CompressCrf(optionProps.RateFactorModel.CRFSlider.Value, optionProps.RateFactorModel.PresetSlider.ValueString);
                     break;
                 case CompressionMethod.QA:
-                    processTask = compressProcessor.CompressAudioQualityFactor(optionProps.AudioQuality.Value);
+                    processTask = () => compressProcessor.CompressAudioQualityFactor(optionProps.AudioQuality.Value);
                     break;
                 case CompressionMethod.AR:
-                    processTask = compressProcessor.CompressAudioSamplingRate(optionProps.AudioSampleRateModel.SelectedValue.Value);
+                    processTask = () => compressProcessor.CompressAudioSamplingRate(optionProps.AudioSampleRateModel.SelectedValue.Value);
                     break;
                 case CompressionMethod.QV:
-                    processTask = compressProcessor.CompressImageQualityFactor(optionProps.ImageQuality.Value);
+                    processTask = () => compressProcessor.CompressImageQualityFactor(optionProps.ImageQuality.Value);
                     break;
                 default: throw new NotImplementedException();
             }
