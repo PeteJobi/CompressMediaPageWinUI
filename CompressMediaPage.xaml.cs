@@ -161,7 +161,7 @@ namespace CompressMediaPage
                     CRFSlider = new SliderModel { Value = 25, Min = 10, Max = 40 }
                 };
                 optionProps.AudioBitrateModel = GetDropdownModel(audioBitrateOptions, "bitrate", BitrateUnit);
-                optionProps.AudioSampleRateModel = GetDropdownModel(audioSampleRateOptions, "sample rate", "kHz");
+                optionProps.AudioSampleRateModel = GetDropdownModel(audioSampleRateOptions, "sample rate", "Hz");
                 optionProps.FpsModel = GetDropdownModel(fpsOptions, "fps", "FPS");
                 optionProps.AudioQuality = new SliderModel { Value = 2, Min = 0, Max = 9 };
                 optionProps.ImageQuality = new SliderModel { Value = 5, Min = 2, Max = 20 };
