@@ -27,6 +27,7 @@ namespace CompressMediaPage
     {
         private string? navigateTo;
         private string? outputFile;
+        // ReSharper disable once ConvertToConstant.Local //Cannot be const because it is used in XAML
         private readonly double pageMaxWidth = 700;
         private readonly double[] resolutionOptions = [144, 360, 480, 720, 1080, 1440, 2160];
         private readonly double[] audioBitrateOptions = [32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
@@ -102,6 +103,7 @@ namespace CompressMediaPage
             HardwareSelector.RegisterPropertyChangedCallback(HardwareSelector.SelectedGpuProperty, OnGpuChanged);
             InitializeOptionModels();
             await CompleteOptionModels();
+            return;
 
             static string GetIconGlyph(MediaType mediaType) => mediaType switch
             {
@@ -218,6 +220,7 @@ namespace CompressMediaPage
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+                return;
 
                 static void SetUpDropdownModel(DropdownModel model, double[] options, double originalValue)
                 {
@@ -235,8 +238,9 @@ namespace CompressMediaPage
 
             void SetResolutionModel(Size originalRes)
             {
-                var resolutionHeightOptions = resolutionOptions.Where(h => h < originalRes.Height).ToList();
                 var aspectRatio = originalRes.Width / (double)originalRes.Height;
+                var isPortrait = aspectRatio < 1;
+                var resolutionHeightOptions = resolutionOptions.Where(d => isPortrait ? d < originalRes.Width : d < originalRes.Height).ToList();
                 var options = new ObservableCollection<Size>(resolutionHeightOptions.Select(GetResolutionFromOption));
                 foreach (var resolutionOption in options)
                 {
@@ -259,17 +263,17 @@ namespace CompressMediaPage
                             break;
                     }
                 };
+                return;
 
                 Size GetResolutionFromOption(double dimension)
                 {
-                    var isPortrait = aspectRatio < 1;
                     var otherDimension = Convert.ToInt32(isPortrait ? dimension / aspectRatio : dimension * aspectRatio);
                     if (otherDimension % 2 != 0) otherDimension += 1;
                     return isPortrait ? new Size((int)dimension, otherDimension) : new Size(otherDimension, (int)dimension);
                 }
             }
 
-            DropdownModel GetDropdownModel(double[] options, string label, string unit)
+            static DropdownModel GetDropdownModel(double[] options, string label, string unit)
             {
                 var model = new DropdownModel
                 {
