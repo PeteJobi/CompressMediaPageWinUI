@@ -20,6 +20,7 @@ namespace CompressMediaPage
             var size = GetFileSize(mediaPath);
             double bitrate = 0, fps = 0;
             int width = 0, height = 0;
+            var hasAudio = false;
             var valuesSet = false;
 
             await Ffmpeg().Input(mediaPath).NoOutput().ErrorHandler((sender, args) =>
@@ -27,11 +28,16 @@ namespace CompressMediaPage
                 Debug.WriteLine(args.Data);
                 if (valuesSet || string.IsNullOrWhiteSpace(args.Data) || hasBeenKilled) return;
                 var matchCollection = Regex.Matches(args.Data, @"\s*Stream #\d+:\d+.*?: Video: .+?, (\d+)x(\d+).*?,(?: (\d+) kb/s,)? (\d+?\.?\d*?) fps");
-                if (matchCollection.Count == 0) return;
+                if (matchCollection.Count != 0)
+                {
                 width = int.Parse(matchCollection[0].Groups[1].Value);
                 height = int.Parse(matchCollection[0].Groups[2].Value);
                 _ = double.TryParse(matchCollection[0].Groups[3].Value, out bitrate);
                 fps = double.Parse(matchCollection[0].Groups[4].Value);
+                }
+                matchCollection = Regex.Matches(args.Data, @"\s*Stream #0:(\d+).*?: Audio.+");
+                if (matchCollection.Count == 0) return;
+                hasAudio = true;
                 valuesSet = true;
             }).StartPlainProcess();
 
@@ -40,7 +46,8 @@ namespace CompressMediaPage
                 Size = size,
                 Bitrate = bitrate,
                 Resolution = new Size(width, height),
-                Fps = fps
+                Fps = fps,
+                HasAudio = hasAudio
             };
         }
 
@@ -313,6 +320,7 @@ namespace CompressMediaPage
         public double Bitrate { get; set; }
         public Size Resolution { get; set; }
         public double Fps { get; set; }
+        public bool HasAudio { get; set; }
     }
 
     public struct AudioDetails
