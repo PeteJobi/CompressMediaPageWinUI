@@ -225,9 +225,9 @@ namespace CompressMediaPage
                 static void SetUpDropdownModel(DropdownModel model, double[] options, double originalValue)
                 {
                     model.SelectedValue = model.Options.Last(); //This is needed to avoid a weird NullReferenceException
-                    foreach (var bitrateOption in options)
+                    foreach (var option in options)
                     {
-                        if (bitrateOption >= originalValue) model.Options.RemoveAt(0);
+                        if (option >= originalValue) model.Options.RemoveAt(0);
                     }
                     var originalRate = new DropdownModel.Item { Value = originalValue, Unit = model.Options.First().Unit };
                     model.Options.Insert(0, originalRate);
@@ -273,15 +273,14 @@ namespace CompressMediaPage
                 }
             }
 
-            static DropdownModel GetDropdownModel(double[] options, string label, string unit)
+            static DropdownModel GetDropdownModel(double[] options, string? label, string unit)
             {
                 var model = new DropdownModel
                 {
-                    Options = new ObservableCollection<DropdownModel.Item>(options.Reverse()
-                            .Select(i => new DropdownModel.Item{ Value = i, Unit = unit })),
-                    Label = label,
-                    OriginalValue = "Calculating..."
+                    Options = [.. options.Reverse().Select(i => new DropdownModel.Item { Value = i, Unit = unit })],
+                    Label = label
                 };
+                if(label != null) model.OriginalValue = "Calculating...";
                 model.SelectedValue = model.Options.First();
                 return model;
             }

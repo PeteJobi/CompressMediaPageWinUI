@@ -23,8 +23,8 @@
         <local:EnumToVisibilityConverter x:Key="FPSVisibility" Enum="FPS"/>
         <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
         <converters:DoubleToVisibilityConverter x:Key="DoubleToVisibilityConverter" GreaterThan="0" />
-        <converters:DoubleToObjectConverter x:Key="CustomResVisibility" LessThan="1" TrueValue="Collapsed" FalseValue="Visible" />
-        <converters:DoubleToObjectConverter x:Key="ResolutionToFontSizeConverter" GreaterThan="1"
+        <converters:DoubleToObjectConverter x:Key="CustomVisibility" LessThan="1" TrueValue="Collapsed" FalseValue="Visible" />
+        <converters:DoubleToObjectConverter x:Key="DoubleToFontSizeConverter" GreaterThan="0"
                                             TrueValue="{StaticResource BigFontSize}"
                                             FalseValue="{StaticResource ControlContentThemeFontSize}" />
         <converters:BoolToObjectConverter x:Key="SliderWidth" TrueValue="200" FalseValue="500"/>
@@ -61,7 +61,7 @@
 		</DataTemplate>
         <DataTemplate x:Key="DropdownOption" x:DataType="local:DropdownModel">
 			<StackPanel Spacing="5">
-                <TextBlock HorizontalAlignment="Center">
+                <TextBlock HorizontalAlignment="Center" Visibility="{x:Bind OriginalValue, Mode=OneWay, Converter={StaticResource ObjectToVisibilityConverter}}">
                     <Run>Original </Run>
                     <Run Text="{x:Bind Label}"/>
                     <Run>: </Run>
@@ -69,7 +69,9 @@
                 </TextBlock>
                 <controls:ComboBoxEx ItemsSource="{x:Bind Options}" HorizontalAlignment="Center"
                                      SelectedItem="{x:Bind SelectedValue, Mode=TwoWay}"
-                                     FontSize="{StaticResource BigFontSize}" />
+                                     FontSize="{x:Bind SelectedValue.Value, Mode=OneWay, Converter={StaticResource DoubleToFontSizeConverter}}" />
+                <NumberBox Width="200" Value="{x:Bind CustomValue, Mode=TwoWay}" FontSize="{StaticResource BigFontSize}"
+                           Visibility="{x:Bind SelectedValue.Value, Mode=OneWay, Converter={StaticResource CustomVisibility}, ConverterParameter=True}"/>
             </StackPanel>
         </DataTemplate>
     </Page.Resources>
@@ -111,10 +113,10 @@
                             Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource ResolutionVisibility}}">
                     <ContentPresenter ContentTemplate="{StaticResource OriginalResText}"
                                       Content="{x:Bind optionProps.ResolutionModel.OriginalResolution, Mode=OneWay}"
-                                      Visibility="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource CustomResVisibility}}" />
+                                      Visibility="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource CustomVisibility}}" />
                     <controls:ComboBoxEx ItemsSource="{x:Bind optionProps.ResolutionModel.Options}" HorizontalAlignment="Center"
                               SelectedItem="{x:Bind optionProps.ResolutionModel.SelectedResolution, Mode=TwoWay}"
-                              FontSize="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource ResolutionToFontSizeConverter}}">
+                              FontSize="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource DoubleToFontSizeConverter}}">
                         <controls:ComboBoxEx.ItemTemplate>
                             <DataTemplate x:DataType="drawing:Size">
                                 <Grid>
@@ -135,9 +137,9 @@
                     <ContentPresenter ContentTemplate="{StaticResource OriginalResText}"
                                       Content="{x:Bind optionProps.ResolutionModel.OriginalResolution, Mode=OneWay}"
                                       Margin="0,20,0,0"
-                                      Visibility="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource CustomResVisibility}, ConverterParameter=True}" />
+                                      Visibility="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource CustomVisibility}, ConverterParameter=True}" />
                     <StackPanel Spacing="10" Orientation="Horizontal"
-                                Visibility="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource CustomResVisibility}, ConverterParameter=True}">
+                                Visibility="{x:Bind optionProps.ResolutionModel.SelectedResolution.Width, Mode=OneWay, Converter={StaticResource CustomVisibility}, ConverterParameter=True}">
                         <NumberBox Width="200" Value="{x:Bind optionProps.ResolutionModel.CustomWidth, Mode=TwoWay}"
                                    FontSize="{StaticResource BigFontSize}" />
                         <TextBlock VerticalAlignment="Center" Style="{StaticResource SubtitleTextBlockStyle}">x</TextBlock>

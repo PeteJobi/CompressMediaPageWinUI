@@ -167,9 +167,9 @@ namespace CompressMediaPage
     public class DropdownModel: INotifyPropertyChanged
     {
         public ObservableCollection<Item> Options { get; set; }
-        public string Label { get; set; }
-        private string _originalValue;
-        public string OriginalValue
+        public string? Label { get; set; }
+        private string? _originalValue;
+        public string? OriginalValue
         {
             get => _originalValue;
             set => SetProperty(ref _originalValue, value);
@@ -179,6 +179,12 @@ namespace CompressMediaPage
         {
             get => _selectedValue;
             set => SetProperty(ref _selectedValue, value);
+        }
+        private double _customValue;
+        public double CustomValue
+        {
+            get => _customValue;
+            set => SetProperty(ref _customValue, value);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -197,7 +203,7 @@ namespace CompressMediaPage
         {
             public double Value { get; set; }
             public string Unit { get; set; }
-            public override string ToString() => $"{Value} {Unit}";
+            public override string ToString() => Value == 0 ? "Custom" : $"{Value} {Unit}";
         }
     }
 
