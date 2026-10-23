@@ -142,15 +142,14 @@ namespace CompressMediaPage
 
         public async Task CompressFps(double fps, bool isGif)
         {
-            var fpsParam = $"-r {fps}";
             if (isGif)
             {
-                await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath)).ArgumentsAfterInput(fpsParam).ProgressHandler(ProgressHandler).StartPlainProcess(); // GIFs do not support hardware acceleration
+                await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath)).Fps(fps).ProgressHandler(ProgressHandler).StartPlainProcess(); // GIFs do not support hardware acceleration
             }
             else
             {
                 await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath))
-                    .ArgumentsAfterInput($"-fps_mode auto {fpsParam}")
+                    .Fps(fps)
                     .ProgressHandler(ProgressHandler, X265LineWatcher)
                     .StartTranscodingProcess();
             }
