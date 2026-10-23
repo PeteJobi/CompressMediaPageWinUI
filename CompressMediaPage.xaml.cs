@@ -33,11 +33,13 @@ namespace CompressMediaPage
         private readonly double[] audioBitrateOptions = [32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
         private readonly double[] audioSampleRateOptions = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000];
         private readonly double[] fpsOptions = [1, 5, 10, 15, 24, 30, 50, 60, 72, 90, 100, 120, 144, 200, 240];
+        private readonly double[] speedUpOptions = [0, 3.0, 2.5, 2.0, 1.5, 1.0];
         private const string BitrateUnit = "kb/s";
         private const string SizeUnit = "MB";
         private MainModel viewModel = new();
         private CompressProcessor compressProcessor;
         private OptionsProps optionProps;
+        private object _mediaDetails;
 
         public CompressMediaPage()
         {
@@ -79,10 +81,11 @@ namespace CompressMediaPage
                     {
                         MediaType.Video => GetRadioItemsForCompMethods([
                             CompressionMethod.FileSize, CompressionMethod.VideoBitrate, CompressionMethod.Resolution,
-                            CompressionMethod.CRF, CompressionMethod.FPS
+                            CompressionMethod.Speed, CompressionMethod.FPS, CompressionMethod.CRF
                         ]),
                         MediaType.Audio => GetRadioItemsForCompMethods([
-                            CompressionMethod.FileSize, CompressionMethod.AudioBitrate, CompressionMethod.QA, CompressionMethod.AR
+                            CompressionMethod.FileSize, CompressionMethod.AudioBitrate, CompressionMethod.QA,
+                            CompressionMethod.AR, CompressionMethod.Speed
                         ]),
                         MediaType.ImageJpg => GetRadioItemsForCompMethods([
                             CompressionMethod.Resolution, CompressionMethod.QV
@@ -130,6 +133,7 @@ namespace CompressMediaPage
                     CompressionMethod.VideoBitrate or CompressionMethod.AudioBitrate => "Target Bitrate",
                     CompressionMethod.Resolution => "Target Resolution",
                     CompressionMethod.FPS => "Target Frame Rate (FPS)",
+                    CompressionMethod.Speed => "Playback Speed",
                     CompressionMethod.CRF => "Constant Rate Factor (CRF)",
                     CompressionMethod.QV => "Quality Factor (QV)",
                     CompressionMethod.AR => "Audio Rate (AR)",
@@ -163,6 +167,8 @@ namespace CompressMediaPage
                 optionProps.AudioBitrateModel = GetDropdownModel(audioBitrateOptions, "bitrate", BitrateUnit);
                 optionProps.AudioSampleRateModel = GetDropdownModel(audioSampleRateOptions, "sample rate", "Hz");
                 optionProps.FpsModel = GetDropdownModel(fpsOptions, "fps", "FPS");
+                optionProps.SpeedModel = GetDropdownModel(speedUpOptions, null, "x");
+                optionProps.SpeedModel.SelectedValue = optionProps.SpeedModel.Options.First();
                 optionProps.AudioQuality = new SliderModel { Value = 2, Min = 0, Max = 9 };
                 optionProps.ImageQuality = new SliderModel { Value = 5, Min = 2, Max = 20 };
                 OnGpuChanged(HardwareSelector, HardwareSelector.SelectedGpuProperty);
@@ -176,6 +182,7 @@ namespace CompressMediaPage
                     {
                         var videoDetails = await ProcessManager.StartSimpleProcess(() => compressProcessor.GetVideoDetails());
                         if(videoDetails.Size == 0) return;
+                        _mediaDetails = videoDetails;
 
                         if (optionProps.MediaType == MediaType.Video)
                         {
@@ -200,6 +207,7 @@ namespace CompressMediaPage
                     case MediaType.Audio:
                         var audioDetails = await ProcessManager.StartSimpleProcess(() => compressProcessor.GetAudioDetails());
                         if(audioDetails.Size == 0) return;
+                        _mediaDetails = audioDetails;
 
                         if (optionProps.SizeViewModel.SpecifiedValue == 0) //If the user hasn't changed it
                         {
@@ -215,6 +223,7 @@ namespace CompressMediaPage
                     case MediaType.ImagePng:
                         var originalRes = await ProcessManager.StartSimpleProcess(() => compressProcessor.GetImageResolution());
                         if(originalRes.Width == 0 || originalRes.Height == 0) return;
+                        _mediaDetails = originalRes;
                         SetResolutionModel(originalRes);
                         break;
                     default:
@@ -290,9 +299,9 @@ namespace CompressMediaPage
         {
             viewModel.NewSize = null;
             outputFile = null;
-            bool isAudio;
             Func<Task> processTask;
             compressProcessor.SetInitialProgressTexts();
+            var isAudio = optionProps.MediaType == MediaType.Audio;
             switch (viewModel.SelectedOption.Method)
             {
                 case CompressionMethod.Resolution:
@@ -302,18 +311,21 @@ namespace CompressMediaPage
                     processTask = () => compressProcessor.CompressResolution(width, isImage);
                     break;
                 case CompressionMethod.VideoBitrate or CompressionMethod.AudioBitrate:
-                    isAudio = optionProps.MediaType == MediaType.Audio;
                     var bitrate = isAudio ? optionProps.AudioBitrateModel.SelectedValue.Value : optionProps.VideoBitrateViewModel.SpecifiedValue;
                     processTask = () => compressProcessor.CompressBitrate(bitrate, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio);
                     break;
                 case CompressionMethod.FileSize:
-                    isAudio = optionProps.MediaType == MediaType.Audio;
                     var size = optionProps.SizeViewModel.SpecifiedValue;
                     processTask = () => compressProcessor.CompressSize(size, optionProps.VideoBitrateViewModel.LimitToTarget, isAudio);
                     break;
                 case CompressionMethod.FPS:
                     var isGif = optionProps.MediaType == MediaType.ImageGif;
                     processTask = () => compressProcessor.CompressFps(optionProps.FpsModel.SelectedValue.Value, isGif);
+                    break;
+                case CompressionMethod.Speed:
+                    var newSpeed = optionProps.SpeedModel.SelectedValue.Value;
+                    if (newSpeed == 0) newSpeed = optionProps.SpeedModel.CustomValue;
+                    processTask = () => compressProcessor.CompressPlayback(newSpeed, _mediaDetails as VideoDetails?);
                     break;
                 case CompressionMethod.CRF:
                     processTask = () => compressProcessor.CompressCrf(optionProps.RateFactorModel.CRFSlider.Value, optionProps.RateFactorModel.PresetSlider.ValueString);

@@ -30,10 +30,10 @@ namespace CompressMediaPage
                 var matchCollection = Regex.Matches(args.Data, @"\s*Stream #\d+:\d+.*?: Video: .+?, (\d+)x(\d+).*?,(?: (\d+) kb/s,)? (\d+?\.?\d*?) fps");
                 if (matchCollection.Count != 0)
                 {
-                width = int.Parse(matchCollection[0].Groups[1].Value);
-                height = int.Parse(matchCollection[0].Groups[2].Value);
-                _ = double.TryParse(matchCollection[0].Groups[3].Value, out bitrate);
-                fps = double.Parse(matchCollection[0].Groups[4].Value);
+                    width = int.Parse(matchCollection[0].Groups[1].Value);
+                    height = int.Parse(matchCollection[0].Groups[2].Value);
+                    _ = double.TryParse(matchCollection[0].Groups[3].Value, out bitrate);
+                    fps = double.Parse(matchCollection[0].Groups[4].Value);
                 }
                 matchCollection = Regex.Matches(args.Data, @"\s*Stream #0:(\d+).*?: Audio.+");
                 if (matchCollection.Count == 0) return;
@@ -162,6 +162,64 @@ namespace CompressMediaPage
             }
             if (HasBeenKilled()) return;
             AllDone();
+        }
+
+        public async Task CompressPlayback(double speed, VideoDetails? videoDetails)
+        {
+            if (speed == 0)
+            {
+                error("Playback speed cannot be zero.");
+                return;
+            }
+            if (!videoDetails.HasValue)
+            {
+                await StartProcessForAudioOrImage($"-filter:a {GetAudioTempo()}");
+            }
+            else
+            {
+                var complexFilter = $"[0:v] setpts={1 / speed}*PTS [v]";
+                var mapping = "-map \"[v]\"";
+                if (videoDetails.Value.HasAudio)
+                {
+                    complexFilter += $"; [0:a] {GetAudioTempo()} [a]";
+                    mapping += " -map \"[a]\"";
+                }
+                await Ffmpeg().Input(mediaPath).Output(GetOutputName(mediaPath))
+                    .ComplexFilter(complexFilter).Fps(videoDetails.Value.Fps)
+                    .ArgumentsAfterInput(mapping).AudioEncoding(string.Empty)
+                    .ProgressHandler(AdjustedProgressHandler, X265LineWatcher)
+                    .StartTranscodingProcess();
+            }
+            if (HasBeenKilled()) return;
+            AllDone();
+            return;
+
+            void AdjustedProgressHandler(double progress, TimeSpan currentTime, TimeSpan duration, int fps)
+            {
+                var adjustedProgress = progress * speed;
+                IncrementProgress(adjustedProgress);
+            }
+
+            string GetAudioTempo()
+            {
+                // The atempo filter only supports values between 0.5 and 2.0, so we need to chain multiple atempo filters for speeds outside this range.
+                // For example, a speed of 4.0 would be atempo=2.0,atempo=2.0, and a speed of 0.25 would be atempo=0.5,atempo=0.5.
+                // Current versions of FFmpeg support atempo values up to 100, but they still recommend keeping between 0.5 and 2.0 to not lose samples.
+                var builder = new StringBuilder();
+                var remainingSpeed = speed;
+                while (remainingSpeed > 2.0)
+                {
+                    builder.Append("atempo=2.0,");
+                    remainingSpeed /= 2.0;
+                }
+                while (remainingSpeed < 0.5)
+                {
+                    builder.Append("atempo=0.5,");
+                    remainingSpeed *= 2.0;
+                }
+                builder.Append($"atempo={remainingSpeed}");
+                return builder.ToString();
+            }
         }
 
         public async Task CompressSize(double sizeInMb, bool limitToTarget, bool isAudio)

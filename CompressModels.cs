@@ -236,6 +236,7 @@ namespace CompressMediaPage
         public DropdownModel AudioBitrateModel { get; set; }
         public DropdownModel AudioSampleRateModel { get; set; }
         public DropdownModel FpsModel { get; set; }
+        public DropdownModel SpeedModel { get; set; }
         public SliderModel AudioQuality { get; set; }
         public SliderModel ImageQuality { get; set; }
     }
@@ -263,6 +264,7 @@ namespace CompressMediaPage
         AudioBitrate,
         Resolution,
         FPS,
+        Speed,
         CRF, // Constant Rate Factor for videos
         QV, // Quality Value for images
         QA, // Audio Quality for audio files

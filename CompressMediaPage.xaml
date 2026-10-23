@@ -21,6 +21,7 @@
 		<local:EnumToVisibilityConverter x:Key="AudioQualityVisibility" Enum="QA"/>
 		<local:EnumToVisibilityConverter x:Key="ImageQualityVisibility" Enum="QV"/>
         <local:EnumToVisibilityConverter x:Key="FPSVisibility" Enum="FPS"/>
+        <local:EnumToVisibilityConverter x:Key="SpeedVisibility" Enum="Speed"/>
         <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
         <converters:DoubleToVisibilityConverter x:Key="DoubleToVisibilityConverter" GreaterThan="0" />
         <converters:DoubleToObjectConverter x:Key="CustomVisibility" LessThan="1" TrueValue="Collapsed" FalseValue="Visible" />
@@ -163,6 +164,10 @@
                 <ContentPresenter ContentTemplate="{StaticResource DropdownOption}" Content="{x:Bind optionProps.FpsModel}"
                                   HorizontalAlignment="Center"
                                   Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource FPSVisibility}}"/>
+                <!--Playback speed-->
+                <ContentPresenter ContentTemplate="{StaticResource DropdownOption}" Content="{x:Bind optionProps.SpeedModel}"
+                                  HorizontalAlignment="Center"
+                                  Visibility="{x:Bind viewModel.SelectedOption.Method, Mode=OneWay, Converter={StaticResource SpeedVisibility}}"/>
                 <!--Audio bitrate-->
                 <ContentPresenter ContentTemplate="{StaticResource DropdownOption}" Content="{x:Bind optionProps.AudioBitrateModel}"
                                   HorizontalAlignment="Center"
